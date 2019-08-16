@@ -1,84 +1,85 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BorderBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxTextContent;
-import dev.dankins.javamon.display.screen.menu.helper.Gen1TitleMenu;
-import dev.dankins.javamon.display.screen.menu.helper.ListBox;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
+import dev.dankins.javamon.display.screen.menu.game.Gen1TitleMenu;
 import dev.dankins.javamon.display.screen.menu.helper.Timer;
-import dev.dankins.javamon.display.screen.menu.helper.VertBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1GameMenu implements GameMenu {
 
-	private boolean hasSave;
-
 	private TitleStage stage = TitleStage.Start;
 	private GameMenuAction action;
 
+	// Logo
+	private Content startScreen;
+
+	// Title Screen
 	private final Gen1TitleMenu titleMenu = new Gen1TitleMenu();
+
+	// Menu
+	private BorderBox menuScreen;
+	private ListBox menu;
 
 	@Override
 	public boolean renderBehind() {
 		return false;
 	}
 
+	private boolean hasSave;
+	private String gameName;
+
 	@Override
-	public void setupMenu(final boolean hasSave) {
+	public void setupMenu(final String gameName, final boolean hasSave) {
+		this.gameName = gameName;
 		this.hasSave = hasSave;
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
-		titleMenu.init(assets);
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		titleMenu.init(assets, ri, gameName);
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+
+		startScreen = new VertBox(20, 50).setSpacing(12)
+				.addContent(new TextContent(font, "'95'96'98 Nintendo"))
+				.addContent(new TextContent(font, "'95'96'98 Creatures inc."))
+				.addContent(new TextContent(font, "'95'96'98 Game Freak inc."));
+
+		menuScreen = new BorderBox(assets, 0, 0);
+		menuScreen.addContent(() -> {
+			menu = new ListBox(assets, 0, 0);
+			if (hasSave) {
+				menu.addContent(new TextContent(font, "Continue"));
+			}
+			menu.addContent(new TextContent(font, "New Game"))
+					.addContent(new TextContent(font, "Option"));
+			return menu;
+		}).setLeftPadding(6);
 	}
 
-	private BoxContent startScreen;
-
-	private BoxContent window;
-	private ListBox menu;
-
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-
+	public void renderScreen(final RenderHelper rh, final float delta) {
 		switch (stage) {
 		case Start:
-			if (startScreen == null) {
-				startScreen = new VertBox(20, 50)
-						.addContent(new BoxTextContent("'95'96'98 Nintendo"))
-						.addContent(new BoxTextContent("'95'96'98 Creatures inc."))
-						.addContent(new BoxTextContent("'95'96'98 Game Freak inc."));
-			}
-			batch.begin();
-			startScreen.render(ri, batch, 0, 0);
-			batch.end();
+			rh.withSpriteBatch((batch) -> startScreen.render(rh, 0, 0));
 			break;
 		case TitleScreen:
-			titleMenu.renderScreen(ri, delta, batch);
+			titleMenu.renderScreen(rh, delta);
 			break;
 		case Menu:
-			if (menu == null) {
-				if (hasSave) {
-					menu = new ListBox(0, 0).addLine("Continue").addLine("New Game")
-							.addLine("Option");
-				} else {
-					menu = new ListBox(0, 0).addLine("New Game").addLine("Option");
-				}
-				window = new BorderBoxContent(0, 0, 100, menu.getHeight()).addContent(menu);
-			}
-			batch.begin();
-			window.render(ri, batch, 0, 0);
-			batch.end();
+			rh.withSpriteBatch((batch) -> menuScreen.render(rh, 0, 0));
 			break;
 		}
-
 	}
 
 	private final Timer startTimer = new Timer(2) {

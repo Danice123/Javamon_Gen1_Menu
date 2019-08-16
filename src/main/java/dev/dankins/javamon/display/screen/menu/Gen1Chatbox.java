@@ -1,15 +1,20 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.utils.Align;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1Chatbox implements Chatbox {
+
+	private BorderBox box;
+	private TextContent textContent;
 
 	private String[] text;
 	private int index = 0;
@@ -22,8 +27,8 @@ public class Gen1Chatbox implements Chatbox {
 	@Override
 	public void setupMenu(final String text) {
 		index = 0;
-		if (text.contains("/n")) {
-			this.text = text.split("/n");
+		if (text.contains("\\p")) {
+			this.text = text.split("\\\\p");
 		} else {
 			this.text = new String[] { text };
 		}
@@ -34,38 +39,41 @@ public class Gen1Chatbox implements Chatbox {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+
+		box = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth);
+		box.setMinHeight(50).addContent(() -> {
+			textContent = new TextContent(font, text[index]).setWrappingWidth(ri.screenWidth - 20)
+					.setIsProgressive();
+			return textContent;
+		}).setLeftPadding(8).setTopPadding(10);
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		batch.begin();
-		renderChatbox(batch, ri);
-		batch.end();
-	}
-
-	public void renderChatbox(final SpriteBatch batch, final RenderInfo ri) {
-		ri.border.drawBox(batch, 0, 0, ri.screenWidth, 50 * ri.getScale());
-		if (text != null) {
-			ri.font.draw(batch, text[index], ri.border.WIDTH + 2,
-					50 * ri.getScale() - ri.border.HEIGHT,
-					ri.screenWidth - 2 * (ri.border.WIDTH + 2), Align.left, true);
-		}
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> box.render(rh, 0, rh.ri.screenHeight - box.getHeight()));
 	}
 
 	@Override
 	public void tickSelf(final float delta) {
+		textContent.tickSelf(delta);
 	}
 
 	@Override
 	public void handleMenuKey(final Key key) {
 		if (key == Key.accept || key == Key.deny) {
-			if (isFinished()) {
-				ThreadUtils.notifyOnObject(this);
-			} else {
-				index++;
+			if (!textContent.isFinished()) {
+				textContent.finishText();
+				ThreadUtils.sleep(100);
+				return;
 			}
+			if (!isFinished()) {
+				index++;
+				textContent.setText(text[index]);
+				return;
+			}
+			ThreadUtils.notifyOnObject(this);
 		}
 	}
 

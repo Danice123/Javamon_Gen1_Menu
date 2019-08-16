@@ -10,13 +10,13 @@ import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.CollectionLibrary;
 import dev.dankins.javamon.data.monster.MonsterList;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BasicBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxTextContent;
-import dev.dankins.javamon.display.screen.menu.helper.HorzBox;
-import dev.dankins.javamon.display.screen.menu.helper.ImageBox;
-import dev.dankins.javamon.display.screen.menu.helper.ListBox;
-import dev.dankins.javamon.display.screen.menu.helper.VertBox;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.ImageContent;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BasicBoxContent;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1Pokedex implements PokedexMenu {
@@ -44,39 +44,39 @@ public class Gen1Pokedex implements PokedexMenu {
 	private ListBox pokemonList;
 	private ListBox submenu;
 
-	private BoxContent dataPanel;
-	private BoxContent title;
+	private Content dataPanel;
+	private Content title;
 
 	@Override
 	public void init(final AssetManager assets) {
 		// TODO: pokeballTex = assets.get(pokeball);
 		pokeballTex = new Texture(pokeball);
 
-		title = new BasicBoxContent(13, 6).addContent(new BoxTextContent("Contents"));
+		title = new BasicBoxContent(13, 6).addContent(new TextContent("Contents"));
 
 		pokemonList = new ListBox(1, 27).setListSize(7);
 
 		for (int i = 1; i < pokemonDB.getTotalMonsters(); i++) {
 
-			final BoxTextContent number = new BoxTextContent(getPokemonNumber(i)).setVertIndent(-8);
+			final TextContent number = new TextContent(getPokemonNumber(i)).setVertIndent(-8);
 			final BasicBoxContent numberBox = new BasicBoxContent(0, 0).addContent(number);
 			if (pokeData.isCaught(i)) {
-				numberBox.addContent(new ImageBox(pokeballTex).setHorzIndent(16));
+				numberBox.addContent(new ImageContent(pokeballTex).setHorzIndent(16));
 			}
 
-			final BoxTextContent name = new BoxTextContent(getPokemonName(i));
+			final TextContent name = new TextContent(getPokemonName(i));
 			final BasicBoxContent horzBox = new HorzBox(0, 0).setSpacing(24).addContent(numberBox)
 					.addContent(name);
 			pokemonList.addContent(horzBox);
 		}
 
 		dataPanel = new VertBox(-36, 23).setSpacing(20)
-				.addContent(new VertBox(0, 0).setSpacing(8).addContent(new BoxTextContent("Seen"))
-						.addContent(new BoxTextContent(Integer.toString(pokeData.amountSeen()))
+				.addContent(new VertBox(0, 0).setSpacing(8).addContent(new TextContent("Seen"))
+						.addContent(new TextContent(Integer.toString(pokeData.amountSeen()))
 								.setHorzIndent(16)))
 				.addContent(
-						new VertBox(0, 0).setSpacing(8).addContent(new BoxTextContent("Own"))
-								.addContent(new BoxTextContent(
+						new VertBox(0, 0).setSpacing(8).addContent(new TextContent("Own"))
+								.addContent(new TextContent(
 										Integer.toString(pokeData.amountCaught()))
 												.setHorzIndent(16)));
 

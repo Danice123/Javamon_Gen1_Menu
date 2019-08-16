@@ -10,10 +10,10 @@ import com.badlogic.gdx.utils.Align;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.monster.Monster;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BasicBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.HorzBox;
-import dev.dankins.javamon.display.screen.menu.helper.VertBox;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.box.BasicBoxContent;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1PokedexPage implements PokedexPageMenu {
@@ -33,7 +33,7 @@ public class Gen1PokedexPage implements PokedexPageMenu {
 		isCaught = caught;
 	}
 
-	private BoxContent stats;
+	private Content stats;
 
 	@Override
 	public void init(final AssetManager assets) {

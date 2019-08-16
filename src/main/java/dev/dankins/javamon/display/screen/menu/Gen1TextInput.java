@@ -1,22 +1,26 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BorderBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxKeyboard;
-import dev.dankins.javamon.display.screen.menu.helper.BoxTextContent;
-import dev.dankins.javamon.display.screen.menu.helper.VertBox;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.BoxKeyboard;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1TextInput implements TextInput {
 
 	private String title;
 	private boolean canCancel;
+
+	private Content titleBox;
+	private BoxKeyboard keyboard;
 
 	private boolean cancelled;
 	private String input;
@@ -33,25 +37,20 @@ public class Gen1TextInput implements TextInput {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+
+		titleBox = new VertBox(0, 10).addContent(new TextContent(font, title)).addContent(
+				new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).addContent(() -> {
+					keyboard = new BoxKeyboard(assets, ri, 0, 0);
+					return keyboard;
+				}).setLeftPadding(6));
+
 	}
 
-	private BoxContent titleBox;
-	private BoxKeyboard keyboard;
-
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		if (keyboard == null) {
-			keyboard = new BoxKeyboard(0, 20);
-			final BorderBoxContent border = new BorderBoxContent(0, 0,
-					ri.screenWidth / ri.getScale(), keyboard.getHeight());
-			titleBox = new VertBox(0, 10).addContent(new BoxTextContent(title)).addContent(border);
-		}
-		batch.begin();
-		titleBox.render(ri, batch, 0, 0);
-		keyboard.render(ri, batch, 0, 0);
-		batch.end();
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> titleBox.render(rh, 0, 0));
 	}
 
 	@Override

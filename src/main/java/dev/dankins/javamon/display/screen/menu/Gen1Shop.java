@@ -9,12 +9,12 @@ import dev.dankins.javamon.data.abstraction.Inventory;
 import dev.dankins.javamon.data.abstraction.Item;
 import dev.dankins.javamon.data.abstraction.ItemStack;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.AmountBox;
-import dev.dankins.javamon.display.screen.menu.helper.BorderBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxTextContent;
-import dev.dankins.javamon.display.screen.menu.helper.HorzBox;
-import dev.dankins.javamon.display.screen.menu.helper.ListBox;
+import dev.dankins.javamon.display.screen.menu.content.CurrencyContent;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.logic.Key;
 import dev.dankins.javamon.logic.abstraction.Player;
 
@@ -43,38 +43,38 @@ public class Gen1Shop implements ShopMenu {
 		chatBox.setupMenu("Hi there! May I help you?");
 	}
 
-	private BoxContent window;
+	private Content window;
 	private ListBox menu;
 
-	private BoxContent buyWindow;
+	private Content buyWindow;
 	private ListBox buyMenu;
 
-	private BoxContent sellWindow;
+	private Content sellWindow;
 	private ListBox sellMenu;
 
-	private BoxContent money;
+	private Content money;
 
-	private BoxContent amountMenu;
-	private AmountBox amountBox;
-	private AmountBox costBox;
+	private Content amountMenu;
+	private CurrencyContent amountBox;
+	private CurrencyContent costBox;
 
 	@Override
 	public void init(final AssetManager assets) {
 		menu = new ListBox(0, 0).addLine("Buy").addLine("Sell").addLine("Exit");
-		window = new BorderBoxContent(0, 0, 60, menu.getHeight()).addContent(menu);
+		window = new BorderBox(0, 0, 60, menu.getHeight()).addContent(menu);
 
 		buyMenu = new ListBox(0, 0);
 		for (final Item item : shop.getItems()) {
 			buyMenu.addContent(
-					new HorzBox(0, 0).setSpacing(48).addContent(new BoxTextContent(item.getName()))
-							.addContent(new BoxTextContent("$" + item.getCost()).setVertIndent(6)));
+					new HorzBox(0, 0).setSpacing(48).addContent(new TextContent(item.getName()))
+							.addContent(new TextContent("$" + item.getCost()).setVertIndent(6)));
 		}
-		buyMenu.addContent(new BoxTextContent("Cancel"));
-		buyWindow = new BorderBoxContent(20, 10, 140, buyMenu.getHeight()).addContent(buyMenu);
+		buyMenu.addContent(new TextContent("Cancel"));
+		buyWindow = new BorderBox(20, 10, 140, buyMenu.getHeight()).addContent(buyMenu);
 
-		amountBox = new AmountBox("x");
-		costBox = new AmountBox("$");
-		amountMenu = new BorderBoxContent(40, 80, 120, 36).addContent(
+		amountBox = new CurrencyContent("x");
+		costBox = new CurrencyContent("$");
+		amountMenu = new BorderBox(40, 80, 120, 36).addContent(
 				new HorzBox(0, 0).setSpacing(60).addContent(amountBox).addContent(costBox));
 	}
 
@@ -88,23 +88,23 @@ public class Gen1Shop implements ShopMenu {
 	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
 			final ShapeRenderer shape, final float delta) {
 		if (money == null) {
-			money = new BorderBoxContent(-80, 0, 80, 36)
-					.addContent(new BoxTextContent("$" + player.getMoney()).setHorzIndent(10));
+			money = new BorderBox(-80, 0, 80, 36)
+					.addContent(new TextContent("$" + player.getMoney()).setHorzIndent(10));
 		}
 		if (sellWindow == null) {
 			sellMenu = new ListBox(0, 0);
 			for (final Item item : player.getInventory().getItems()) {
 				if (item instanceof ItemStack) {
 					sellMenu.addContent(new HorzBox(0, 0).setSpacing(48)
-							.addContent(new BoxTextContent(item.getName()))
-							.addContent(new BoxTextContent("x" + ((ItemStack) item).size())
+							.addContent(new TextContent(item.getName()))
+							.addContent(new TextContent("x" + ((ItemStack) item).size())
 									.setVertIndent(8)));
 				} else {
-					sellMenu.addContent(new BoxTextContent(item.getName()));
+					sellMenu.addContent(new TextContent(item.getName()));
 				}
 			}
-			sellMenu.addContent(new BoxTextContent("Cancel"));
-			sellWindow = new BorderBoxContent(20, 10, 140, sellMenu.getHeight())
+			sellMenu.addContent(new TextContent("Cancel"));
+			sellWindow = new BorderBox(20, 10, 140, sellMenu.getHeight())
 					.addContent(sellMenu);
 		}
 

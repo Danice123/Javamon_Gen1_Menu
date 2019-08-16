@@ -1,11 +1,18 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 import dev.dankins.javamon.logic.abstraction.Player;
 
@@ -13,8 +20,10 @@ public class Gen1Save implements SaveMenu {
 
 	private Player player;
 
-	private int index = 0;
-	private boolean isSave = false;
+	private Content window;
+	private Content textBox;
+	private Content choiceBox;
+	private ListBox menu;
 
 	@Override
 	public boolean renderBehind() {
@@ -27,41 +36,41 @@ public class Gen1Save implements SaveMenu {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+
+		window = new BorderBox(assets, ri.screenWidth, 0)
+				.addContent(new VertBox(0, 0)
+						.addContent(new TextContent(font, "Player: " + player.getName()))
+						.addContent(new HorzBox(0, 0).addContent(new TextContent(font, "Badges:"))
+								.addContent(new TextContent(font, "0")))
+						.addContent(new HorzBox(0, 0).addContent(new TextContent(font, "Pokedex:"))
+								.addContent(new TextContent(font,
+										zeroBuffer(player.getPokeData().amountCaught()))))
+						.addContent(new HorzBox(0, 0).addContent(new TextContent(font, "Time:"))
+								.addContent(new TextContent(font, "20:20"))))
+				.alignRight();
+
+		textBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(50)
+				.addContent(new TextContent(font, "Would you like to SAVE the game?")
+						.setWrappingWidth(ri.screenWidth - 20))
+				.setLeftPadding(8).setTopPadding(10);
+
+		choiceBox = new BorderBox(assets, 0, 0).addContent(() -> {
+			menu = new ListBox(assets, 0, 0);
+			menu.addContent(new TextContent(font, "Yes")).addContent(new TextContent(font, "No"));
+			return menu;
+		}).setLeftPadding(6);
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		final int width = 140 * ri.getScale();
-		final int height = 90 * ri.getScale();
-		final int side = ri.screenWidth - width;
-		final int top = ri.screenHeight;
-		batch.begin();
-		ri.border.drawBox(batch, side, top - height, width, height);
-
-		if (player != null) {
-			ri.font.draw(batch, "Player: " + player.getName(), side + 9 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 0);
-			ri.font.draw(batch, "Badges:", side + 9 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 1);
-			ri.font.draw(batch, "0", side + width - 14 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 1);
-			ri.font.draw(batch, "Pokedex:", side + 9 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 2);
-			ri.font.draw(batch, zeroBuffer(player.getPokeData().amountCaught()),
-					side + width - 30 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 2);
-			ri.font.draw(batch, "Time:", side + 9 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 3);
-			ri.font.draw(batch, "20:20", side + width - 46 * ri.getScale(),
-					top - 12 * ri.getScale() - 18 * ri.getScale() * 3);
-		}
-
-		renderBox(ri, batch);
-		renderText(ri, batch);
-
-		batch.end();
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> {
+			window.render(rh, 0, 0);
+			textBox.render(rh, 0, rh.ri.screenHeight - textBox.getHeight());
+			choiceBox.render(rh, 0,
+					rh.ri.screenHeight - textBox.getHeight() - choiceBox.getHeight());
+		});
 	}
 
 	private String zeroBuffer(final int amount) {
@@ -74,39 +83,6 @@ public class Gen1Save implements SaveMenu {
 		return Integer.toString(amount);
 	}
 
-	private void renderBox(final RenderInfo ri, final SpriteBatch batch) {
-		final int width = 60 * ri.getScale();
-		final int height = 50 * ri.getScale();
-		final int side = 0;
-		final int top = ri.screenHeight - 60 * ri.getScale();
-
-		ri.border.drawBox(batch, side, top - height, width, height);
-
-		ri.font.draw(batch, "Yes", side + 18 * ri.getScale(),
-				top - 12 * ri.getScale() - 18 * ri.getScale() * 0);
-		ri.font.draw(batch, "No", side + 18 * ri.getScale(),
-				top - 12 * ri.getScale() - 18 * ri.getScale() * 1);
-
-		batch.draw(ri.arrow.rightArrow, side + 6 * ri.getScale(),
-				top - 20 * ri.getScale() - 18 * ri.getScale() * index,
-				ri.arrow.rightArrow.getRegionWidth() * ri.getScale(),
-				ri.arrow.rightArrow.getRegionHeight() * ri.getScale());
-	}
-
-	private void renderText(final RenderInfo ri, final SpriteBatch batch) {
-		final int width = ri.screenWidth;
-		final int height = 50 * ri.getScale();
-		final int side = 0;
-		final int top = 50 * ri.getScale();
-
-		ri.border.drawBox(batch, side, top - height, width, height);
-
-		ri.font.draw(batch, "Would you like to SAVE", side + 9 * ri.getScale(),
-				top - 12 * ri.getScale() - 18 * ri.getScale() * 0);
-		ri.font.draw(batch, "the game?", side + 9 * ri.getScale(),
-				top - 12 * ri.getScale() - 18 * ri.getScale() * 1);
-	}
-
 	@Override
 	public void tickSelf(final float delta) {
 	}
@@ -115,21 +91,16 @@ public class Gen1Save implements SaveMenu {
 	public void handleMenuKey(final Key key) {
 		switch (key) {
 		case up:
-			if (index > 0) {
-				index--;
-			}
+			menu.decrement();
 			break;
 		case down:
-			if (index < 1) {
-				index++;
-			}
+			menu.increment();
 			break;
-		case accept:
-			if (index == 0) {
-				isSave = true;
-			}
 		case deny:
+			menu.setIndex(1);
+		case accept:
 			ThreadUtils.notifyOnObject(this);
+			break;
 		default:
 			break;
 		}
@@ -137,7 +108,7 @@ public class Gen1Save implements SaveMenu {
 
 	@Override
 	public boolean shouldSave() {
-		return isSave;
+		return menu.getIndex() == 0;
 	}
 
 }

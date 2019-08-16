@@ -3,20 +3,26 @@ package dev.dankins.javamon.display.screen.menu;
 import java.util.List;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BorderBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.ListBox;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1Choicebox implements Choicebox {
 
-	private final Gen1Chatbox chatbox = new Gen1Chatbox();
+	private String text;
 	private List<String> variables;
+
+	private Content window;
+	private ListBox menu;
+	private Content textbox;
 
 	@Override
 	public boolean renderBehind() {
@@ -25,41 +31,33 @@ public class Gen1Choicebox implements Choicebox {
 
 	@Override
 	public void setupMenu(final String text, final List<String> variables) {
-		chatbox.setupMenu(text);
+		this.text = text;
 		this.variables = variables;
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+
+		window = new BorderBox(assets, 0, 0).addContent(() -> {
+			menu = new ListBox(assets, 0, 0);
+			for (final String var : variables) {
+				menu.addContent(new TextContent(font, var));
+			}
+			return menu;
+		}).setLeftPadding(6);
+
+		textbox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(50)
+				.addContent(new TextContent(font, text).setWrappingWidth(ri.screenWidth - 20))
+				.setLeftPadding(8).setTopPadding(10);
 	}
 
-	private BoxContent window;
-	private ListBox menu;
-
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		if (menu == null) {
-			if (variables.size() > 1) {
-				menu = new ListBox(0, 0);
-				for (final String var : variables) {
-					menu.addLine(var);
-				}
-				window = new BorderBoxContent(0, 0, 100, menu.getHeight()).addContent(menu);
-			} else {
-				menu = new ListBox(0, 0).addLine("Yes").addLine("No");
-				window = new BorderBoxContent(-50, 80, 50, menu.getHeight()).addContent(menu);
-			}
-		}
-
-		batch.begin();
-		chatbox.renderChatbox(batch, ri);
-		if (variables.size() > 1) {
-			window.render(ri, batch, 0, 0);
-		} else {
-			window.render(ri, batch, ri.screenWidth / ri.getScale(), 0);
-		}
-		batch.end();
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> {
+			window.render(rh, 0, 0);
+			textbox.render(rh, 0, rh.ri.screenHeight - textbox.getHeight());
+		});
 	}
 
 	@Override
@@ -68,22 +66,18 @@ public class Gen1Choicebox implements Choicebox {
 
 	@Override
 	public void handleMenuKey(final Key key) {
-		if (chatbox.isFinished()) {
-			switch (key) {
-			case up:
-				menu.decrement();
-				break;
-			case down:
-				menu.increment();
-				break;
-			case accept:
-				ThreadUtils.notifyOnObject(this);
-				break;
-			default:
-				break;
-			}
-		} else {
-			chatbox.handleMenuKey(key);
+		switch (key) {
+		case up:
+			menu.decrement();
+			break;
+		case down:
+			menu.increment();
+			break;
+		case accept:
+			ThreadUtils.notifyOnObject(this);
+			break;
+		default:
+			break;
 		}
 	}
 

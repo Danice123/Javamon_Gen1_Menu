@@ -1,8 +1,13 @@
-package dev.dankins.javamon.display.screen.menu.helper;
+package dev.dankins.javamon.display.screen.menu.content.box;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.assets.AssetManager;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.RightArrow;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
 
 public class BoxKeyboard extends VertBox {
 
@@ -12,21 +17,25 @@ public class BoxKeyboard extends VertBox {
 			{ "x", "(", ")", ":", ";", "[", "]", "", "" },
 			{ "-", "?", "!", "♂", "♀", "/", ".", ",", "E" } };
 
-	private final BoxTextContent entry;
+	private final RightArrow arrow;
+	private final TextContent entry;
 	// private final BoxTextContent caseDisplay;
 
 	private int row;
 	private int col;
 
-	public BoxKeyboard(final int x, final int y) {
+	public BoxKeyboard(final AssetManager assets, final RenderInfo ri, final int x, final int y) {
 		super(x, y);
+		spacing = 12;
+		arrow = new RightArrow(assets);
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
-		entry = new BoxTextContent("");
+		entry = new TextContent(font, "");
 		addContent(entry);
 		for (final String[] row : rows) {
-			final HorzBox row1Box = new HorzBox(0, 0).setSpacing(25);
+			final HorzBox row1Box = new HorzBox(0, 0).setSpacing(18);
 			for (final String c : row) {
-				row1Box.addContent(new BoxTextContent(c));
+				row1Box.addContent(new TextContent(font, c));
 			}
 			addContent(row1Box);
 		}
@@ -35,21 +44,19 @@ public class BoxKeyboard extends VertBox {
 	}
 
 	@Override
-	public int getHeight() {
-		return contents.size() * spacing;
-	}
-
-	@Override
-	public void render(final RenderInfo ri, final SpriteBatch batch, final int x, final int y) {
+	public void renderContent(final RenderHelper rh, final int x, final int y) {
 		final int xOffset = x + this.x;
 		final int yOffset = y + this.y;
 
-		batch.draw(ri.arrow.rightArrow, (xOffset + 8 + 25 * col) * ri.getScale(),
-				ri.screenHeight - (yOffset + 8 + 18 * (row + 1)) * ri.getScale(),
-				ri.arrow.rightArrow.getRegionWidth() * ri.getScale(),
-				ri.arrow.rightArrow.getRegionHeight() * ri.getScale());
+		arrow.render(rh, xOffset - 2 + 25 * col, yOffset + 8 + 19 * (row + 1));
 
-		super.render(ri, batch, xOffset + 18, yOffset - 20);
+		// batch.draw(ri.arrow.rightArrow, (xOffset + 8 + 25 * col) *
+		// ri.getScale(),
+		// ri.screenHeight - (yOffset + 8 + 18 * (row + 1)) * ri.getScale(),
+		// ri.arrow.rightArrow.getRegionWidth() * ri.getScale(),
+		// ri.arrow.rightArrow.getRegionHeight() * ri.getScale());
+
+		super.renderContent(rh, xOffset + 8, yOffset);
 	}
 
 	public boolean accept() {

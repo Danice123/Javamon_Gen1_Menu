@@ -1,14 +1,15 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.BorderBoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.BoxContent;
-import dev.dankins.javamon.display.screen.menu.helper.ListBox;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1StartMenu implements StartMenu {
@@ -16,6 +17,9 @@ public class Gen1StartMenu implements StartMenu {
 	private boolean hasPokemon;
 	private boolean hasPokedex;
 	private StartMenuOptions startMenuOption;
+
+	private BorderBox window;
+	private ListBox menu;
 
 	@Override
 	public boolean renderBehind() {
@@ -34,31 +38,30 @@ public class Gen1StartMenu implements StartMenu {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
-	}
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
-	private BoxContent window;
-	private ListBox menu;
-
-	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		if (menu == null) {
-			menu = new ListBox(0, 0);
+		window = new BorderBox(assets, ri.screenWidth, 0);
+		window.addContent(() -> {
+			menu = new ListBox(assets, 0, 0);
 			if (hasPokedex) {
-				menu.addLine("PokeDex");
+				menu.addContent(new TextContent(font, "PokeDex"));
 			}
 			if (hasPokemon) {
-				menu.addLine("Pokemon");
+				menu.addContent(new TextContent(font, "Pokemon"));
 			}
-			menu.addLine("Bag").addLine("Trainer").addLine("Save").addLine("Options")
-					.addLine("Exit");
-			window = new BorderBoxContent(-90, 0, 90, menu.getHeight()).addContent(menu);
-		}
+			menu.addContent(new TextContent(font, "Bag"))
+					.addContent(new TextContent(font, "Trainer"))
+					.addContent(new TextContent(font, "Save"))
+					.addContent(new TextContent(font, "Options"))
+					.addContent(new TextContent(font, "Exit"));
+			return menu;
+		}).setLeftMargin(6).alignRight();
+	}
 
-		batch.begin();
-		window.render(ri, batch, ri.screenWidth / ri.getScale(), 0);
-		batch.end();
+	@Override
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> window.render(rh, 0, 0));
 	}
 
 	@Override

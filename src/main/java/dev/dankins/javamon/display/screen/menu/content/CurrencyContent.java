@@ -1,13 +1,15 @@
-package dev.dankins.javamon.display.screen.menu.helper;
+package dev.dankins.javamon.display.screen.menu.content;
 
-public class AmountBox extends BoxTextContent {
+import dev.dankins.javamon.FontHelper;
+
+public class CurrencyContent extends TextContent {
 
 	private final String prefix;
 	private int max;
 	private int amount;
 
-	public AmountBox(final String prefix) {
-		super(prefix);
+	public CurrencyContent(final FontHelper font, final String prefix) {
+		super(font, prefix);
 		this.prefix = prefix;
 		max = 1;
 		amount = 1;
