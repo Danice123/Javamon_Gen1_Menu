@@ -3,6 +3,7 @@ package dev.dankins.javamon.display.screen.menu;
 import java.util.Map;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -12,6 +13,7 @@ import com.google.common.collect.Maps;
 
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
 import dev.dankins.javamon.display.screen.menu.helper.Gen1HealthBar;
 import dev.dankins.javamon.logic.Key;
 import dev.dankins.javamon.logic.abstraction.Trainer;
@@ -42,7 +44,7 @@ public class Gen1Battle implements BattleMenu {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
 		// TODO: Load with assetManager
 		playerPokemonTex = Maps.newHashMap();
 		player.getParty().stream().map(monster -> monster.getBaseMonster().getNumber())
@@ -64,8 +66,22 @@ public class Gen1Battle implements BattleMenu {
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		
+		rh.withShapeRenderer((shape) -> {
+			shape.filled((helper) -> {
+				final int blength = 115;
+				helper.rect(Color.BLACK, rh.ri.screenWidth - 15, 55, 2, 30);
+				helper.rect(Color.BLACK, rh.ri.screenWidth - blength + 5, 55, blength - 10, 2);
+				helper.rect(Color.BLACK, rh.ri.screenWidth - blength + 7, 55, 2, 1);
+				helper.rect(Color.BLACK, rh.ri.screenWidth - blength + 3, 55, 4, 3);
+				helper.rect(Color.BLACK, rh.ri.screenWidth - blength + 1, 55, 2, 4);
+				
+				helper.percentBar(rh.ri.screenWidth - 100, 70, 80, 6, system.getPlayerMonster().getCurrentHealthPercent());
+			});
+		});
+		
+		
 		shape.begin(ShapeType.Filled);
 		batch.begin();
 

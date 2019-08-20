@@ -1,16 +1,18 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.badlogic.gdx.utils.Align;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.monster.Monster;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
 import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.ImageContent;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BasicBoxContent;
 import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
 import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
@@ -18,9 +20,13 @@ import dev.dankins.javamon.logic.Key;
 
 public class Gen1PokedexPage implements PokedexPageMenu {
 
-	private Texture image;
 	private Monster pokemon;
 	private boolean isCaught;
+	
+	private Content image;
+	private Content number;
+	private Content stats;
+	private Content description;
 
 	@Override
 	public boolean renderBehind() {
@@ -33,83 +39,78 @@ public class Gen1PokedexPage implements PokedexPageMenu {
 		isCaught = caught;
 	}
 
-	private Content stats;
+	
 
 	@Override
-	public void init(final AssetManager assets) {
-		// TODO: Load with assetManager
-		image = new Texture("assets/pokemon/" + pokemon.getNumber() + ".png");
-
-		final BasicBoxContent height;
-		if (isCaught) {
-			height = new HorzBox(0, 0).setSpacing(48).addTextContent("HT")
-					.addTextContent(Integer.toString(pokemon.getHeight()) + "m");
-		} else {
-			height = new HorzBox(0, 0).setSpacing(48).addTextContent("HT").addTextContent("???m");
-		}
-		final BasicBoxContent weight;
-		if (isCaught) {
-			weight = new HorzBox(0, 0).setSpacing(48).addTextContent("WT")
-					.addTextContent(Integer.toString(pokemon.getWeight()) + "lb");
-		} else {
-			weight = new HorzBox(0, 0).setSpacing(48).addTextContent("WT").addTextContent("???lb");
-		}
-		stats = new VertBox(100, 15).addTextContent(pokemon.getName())
-				.addTextContent(pokemon.getSpecies()).addContent(height).addContent(weight);
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		assets.load("pokemon/" + pokemon.getNumber() + ".png", Texture.class);
+		assets.finishLoading();
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+		
+		image = new ImageContent(assets.get("pokemon/" + pokemon.getNumber() + ".png", Texture.class)).alignBottom();
+		number = new TextContent(font, "No." + pokemon.getFormattedNumber());
+		stats = new VertBox(100, 15)
+				.addContent(new TextContent(font, pokemon.getName()))
+				.addContent(new TextContent(font, pokemon.getSpecies()))
+				.addContent(() -> {
+					BasicBoxContent box = new HorzBox(0, 0).setSpacing(48).addContent(new TextContent(font, "HT"));
+					if (isCaught) {
+						box.addContent(new TextContent(font, Integer.toString(pokemon.getHeight()) + "m"));
+					} else {
+						box.addContent(new TextContent(font, "???m"));
+					}
+					return box;
+				})
+				.addContent(() -> {
+					BasicBoxContent box = new HorzBox(0, 0).setSpacing(48).addContent(new TextContent(font, "WT"));
+					
+					if (isCaught) {
+						box.addContent(new TextContent(font, Integer.toString(pokemon.getWeight()) + "lb"));
+					} else {
+						box.addContent(new TextContent(font, "???lb"));
+					}
+					return box;
+				});
+		description = new TextContent(font, pokemon.getDescription().replace('\n', ' ')).setWrappingWidth(220);
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
+	public void renderScreen(final RenderHelper rh, final float delta) {
 		// Fill background
-		shape.begin(ShapeType.Filled);
-		shape.setColor(.5f, .5f, .5f, 0f);
-		shape.rect(0, 0, ri.screenWidth, ri.screenHeight);
-		shape.setColor(0f, 0f, 0f, 0f);
-		shape.rect(5 * ri.getScale(), 5 * ri.getScale(), ri.screenWidth - 10 * ri.getScale(),
-				ri.screenHeight - 10 * ri.getScale());
-		shape.setColor(1f, 1f, 1f, 0f);
-		shape.rect(6 * ri.getScale(), 6 * ri.getScale(), ri.screenWidth - 12 * ri.getScale(),
-				ri.screenHeight - 12 * ri.getScale());
-		shape.setColor(0f, 0f, 0f, 0f);
-		shape.rect(6 * ri.getScale(), 69 * ri.getScale(), ri.screenWidth - 12 * ri.getScale(),
-				2 * ri.getScale());
-
-		final int xoff = 11;
-		final int yoff = 69 * ri.getScale();
-		for (int i = 0; i < 13; i++) {
-			if (i == 5 || i == 6) {
-				continue;
+		
+		rh.withShapeRenderer((shape) -> {
+			shape.filled((helper) -> {
+				Color black = new Color(0f, 0f, 0f, 0f);
+				Color grey = new Color(.5f, .5f, .5f, 0f);
+				Color white = new Color(1f, 1f, 1f, 0f);
+				
+				helper.rect(grey, 0, 0, rh.ri.screenWidth, rh.ri.screenHeight);
+				helper.rect(black, 5, 5, rh.ri.screenWidth - 10, rh.ri.screenHeight - 10);
+				helper.rect(white, 6, 6, rh.ri.screenWidth - 12, rh.ri.screenHeight - 12);
+				
+				helper.rect(black, 6, 69, rh.ri.screenWidth - 12, 2);
+				
+				final int xoff = 11;
+				final int yoff = 69;
+				for (int i = 0; i < 13; i++) {
+					if (i == 5 || i == 6) {
+						continue;
+					}
+					helper.rect(black, xoff + i * 17, yoff - 2, 6, 6);
+					helper.rect(grey, xoff + i * 17 + 1, yoff - 1, 4, 4);
+					helper.rect(white, xoff + i * 17 + 1, yoff, 4, 2);
+				}
+			});
+		});
+		
+		rh.withSpriteBatch((batch) -> {
+			image.render(rh, 50, 90);
+			number.render(rh, 25, 75);
+			stats.render(rh, 0, 0);
+			if (isCaught) {
+				description.render(rh, 10, rh.ri.screenHeight - 60);
 			}
-			shape.setColor(0f, 0f, 0f, 0f);
-			shape.rect((xoff + i * 17) * ri.getScale(), yoff - 2 * ri.getScale(), 6 * ri.getScale(),
-					6 * ri.getScale());
-			shape.setColor(.5f, .5f, .5f, 0f);
-			shape.rect((xoff + i * 17 + 1) * ri.getScale(), yoff - 1 * ri.getScale(),
-					4 * ri.getScale(), 4 * ri.getScale());
-			shape.setColor(1f, 1f, 1f, 0f);
-			shape.rect((xoff + i * 17 + 1) * ri.getScale(), yoff, 4 * ri.getScale(),
-					2 * ri.getScale());
-		}
-		shape.end();
-
-		batch.begin();
-		stats.render(ri, batch, 0, 0);
-
-		if (isCaught) {
-			ri.font.draw(batch, pokemon.getDescription().replace('\n', ' '), 10 * ri.getScale(),
-					60 * ri.getScale(), 220 * ri.getScale(), Align.left, true);
-		}
-
-		final int centerX = 50 * ri.getScale() - image.getWidth() * ri.getScale() / 2;
-		final int centerY = ri.screenHeight - 40 * ri.getScale()
-				- image.getHeight() * ri.getScale() / 2;
-		batch.draw(image, centerX, centerY, image.getWidth() * ri.getScale(),
-				image.getHeight() * ri.getScale(), 0, 0, image.getWidth(), image.getHeight(), true,
-				false);
-		ri.font.draw(batch, "No." + pokemon.getFormattedNumber(), 25 * ri.getScale(),
-				ri.screenHeight - 75 * ri.getScale());
-		batch.end();
+		});
 	}
 
 	@Override
