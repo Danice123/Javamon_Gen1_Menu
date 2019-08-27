@@ -1,32 +1,45 @@
 package dev.dankins.javamon.display.screen.menu;
 
-import java.util.Map;
-
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
-import com.google.common.collect.Maps;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.monster.Stat;
+import dev.dankins.javamon.data.monster.attack.Attack;
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.helper.Gen1HealthBar;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.ImageContent;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1PartyStatus implements PartyStatusMenu {
 
 	private MonsterInstance pokemon;
-	private Map<Stat, Integer> stats;
-	private int expToNextLevel;
 
-	private Texture image;
 	private boolean page;
-	private int toggle = 0;
 
-	private final Gen1HealthBar healthBar = new Gen1HealthBar();
+	private Content image;
+	private Content number;
+	private Content name;
+	private Content infoBox;
+	private Content expBox;
+	private Content infoBox2;
+	private Content statsBox;
+	private Content moveBox;
+
+	private TextContent statsInd;
+	private TextContent attackValue;
+	private TextContent defenseValue;
+	private TextContent specialAttackValue;
+	private TextContent specialDefenseValue;
+	private TextContent speedValue;
 
 	@Override
 	public boolean renderBehind() {
@@ -36,169 +49,195 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 	@Override
 	public void setupMenu(final MonsterInstance pokemon) {
 		this.pokemon = pokemon;
-		stats = Maps.newHashMap();
-		stats.put(Stat.ATTACK, pokemon.getAttack());
-		stats.put(Stat.DEFENSE, pokemon.getDefense());
-		stats.put(Stat.SPECIAL_ATTACK, pokemon.getSpecialAttack());
-		stats.put(Stat.SPECIAL_DEFENSE, pokemon.getSpecialDefense());
-		stats.put(Stat.SPEED, pokemon.getSpeed());
-		stats.put(Stat.HEALTH, pokemon.getHealth());
-		expToNextLevel = pokemon.getExpToNextLevel();
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
-		image = assets.get("assets/pokemon/" + pokemon.getBaseMonster().getNumber() + ".png");
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		assets.load("pokemon/" + pokemon.getBaseMonster().getNumber() + ".png", Texture.class);
+		assets.finishLoading();
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
+		final FontHelper miniFont = MenuLoader.getFont(assets, ri, 6);
+
+		image = new ImageContent(assets
+				.get("pokemon/" + pokemon.getBaseMonster().getNumber() + ".png", Texture.class))
+						.alignBottom();
+		number = new HorzBox(0, 0).addContent(new TextContent(miniFont, "No.")).addContent(
+				new TextContent(font, "" + pokemon.getBaseMonster().getFormattedNumber())
+						.setTopMargin(-2));
+		name = new TextContent(font, pokemon.getName());
+
+		infoBox = new VertBox(0, 0).setSpacing(0)
+				.addContent(
+						new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+								.addContent(new TextContent(font, "" + pokemon.getLevel())
+										.setTopMargin(-2))
+								.setLeftMargin(80).setTopMargin(5))
+				.addContent(new TextContent(miniFont, "HP:").setLeftMargin(30).setTopMargin(4))
+				.addContent(new TextContent(font,
+						pokemon.getCurrentHealth() + "/ " + pokemon.getHealth()).setLeftMargin(65)
+								.setTopMargin(2))
+				.addContent(new TextContent(font, "Status/" + pokemon.getStatus().name)
+						.setTopMargin(9));
+
+		expBox = new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "EXP Points"))
+				.addContent(new TextContent(font, "" + pokemon.getExp()).setLeftMargin(40))
+				.addContent(new TextContent(font, "Level Up"))
+				.addContent(new HorzBox(0, 0).setSpacing(2)
+						.addContent(new TextContent(font, "" + pokemon.getExpToNextLevel()))
+						.addContent(new TextContent(miniFont, "to").setTopMargin(2))
+						.addContent(new TextContent(font, "" + pokemon.getLevel() + 1)
+								.setLeftMargin(4)));
+
+		statsInd = new TextContent(font, "Stats");
+		statsInd.setVisibility(true);
+		statsBox = new BorderBox(assets,
+				0, 0)
+						.setLeftPadding(
+								8)
+						.setTopPadding(10).setBottomPadding(10)
+						.addContent(new VertBox(0, 0).setSpacing(0)
+								.addContent(new TextContent(font, "Attack")).addContent(() -> {
+									attackValue = new TextContent(font, "" + pokemon.getAttack());
+									attackValue.setLeftMargin(-110).alignRight();
+									return attackValue;
+								}).addContent(new TextContent(font, "Defense")).addContent(() -> {
+									defenseValue = new TextContent(font, "" + pokemon.getDefense());
+									defenseValue.setLeftMargin(-110).alignRight();
+									return defenseValue;
+								}).addContent(new TextContent(font, "Special Attack"))
+								.addContent(() -> {
+									specialAttackValue = new TextContent(font,
+											"" + pokemon.getSpecialAttack());
+									specialAttackValue.setLeftMargin(-110).alignRight();
+									return specialAttackValue;
+								}).addContent(new TextContent(font, "Special Defense"))
+								.addContent(() -> {
+									specialDefenseValue = new TextContent(font,
+											"" + pokemon.getSpecialDefense());
+									specialDefenseValue.setLeftMargin(-110).alignRight();
+									return specialDefenseValue;
+								}).addContent(new TextContent(font, "Speed")).addContent(() -> {
+									speedValue = new TextContent(font, "" + pokemon.getSpeed());
+									speedValue.setLeftMargin(-110).alignRight();
+									return speedValue;
+								}));
+
+		infoBox2 = new VertBox(0, 0).setSpacing(2)
+				.addContent(
+						new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "Type1/"))
+								.addContent(new TextContent(font,
+										pokemon.getBaseMonster().getType(0).name).setLeftMargin(8)))
+				.addContent(() -> {
+					final String typeName = pokemon.getBaseMonster().isDualType()
+							? pokemon.getBaseMonster().getType(1).name : "NULL";
+					final Content entry = new VertBox(0, 0).setSpacing(2)
+							.addContent(new TextContent(font, "Type2/"))
+							.addContent(new TextContent(font, typeName).setLeftMargin(8));
+					if (!pokemon.getBaseMonster().isDualType()) {
+						entry.setVisibility(true);
+					}
+					return entry;
+				})
+				.addContent(new VertBox(0, 0).setSpacing(2)
+						.addContent(new TextContent(font, "ID No/"))
+						.addContent(new TextContent(font, pokemon.getId()).setLeftMargin(8)))
+				.addContent(new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "OT/"))
+						.addContent(new TextContent(font, pokemon.getOT()).setLeftMargin(8)));
+
+		moveBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(90)
+				.setTopPadding(10).setBottomPadding(10).addContent(() -> {
+					final VertBox moveList = new VertBox(0, 0);
+					moveList.setSpacing(2);
+					for (int i = 0; i < 4; i++) {
+						if (pokemon.getAttacks().size() <= i) {
+							moveList.addContent(new TextContent(font, "-"))
+									.addContent(new TextContent(font, "--").setLeftMargin(120));
+						} else {
+							final Attack attack = pokemon.getAttacks().get(i);
+							moveList.addContent(new TextContent(font, attack.getName()))
+									.addContent(new HorzBox(0, 0)
+											.addContent(new TextContent(font, "PP"))
+											.addContent(new TextContent(font,
+													"" + attack.getCurrentUsage())
+															.setLeftMargin(20))
+											.addContent(new TextContent(font, "/"))
+											.addContent(new TextContent(font,
+													"" + attack.getMaxUsage()))
+											.setLeftMargin(120));
+						}
+					}
+					return moveList;
+				});
 	}
 
-	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		shape.begin(ShapeType.Filled);
-		shape.setColor(0f, 0f, 0f, 0f);
+	private int toggle = 0;
 
-		shape.rect(ri.screenWidth - 5 * ri.getScale(), 2 * ri.getScale(), 2 * ri.getScale(),
-				70 * ri.getScale());
-		int blength = 110;
-		shape.rect(ri.screenWidth - (blength + 5) * ri.getScale(), 2 * ri.getScale(),
-				blength * ri.getScale(), 2 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 7) * ri.getScale(), 2 * ri.getScale(),
-				2 * ri.getScale(), 1 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 3) * ri.getScale(), 2 * ri.getScale(),
-				4 * ri.getScale(), 3 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 1) * ri.getScale(), 2 * ri.getScale(),
-				2 * ri.getScale(), 4 * ri.getScale());
-
-		shape.rect(ri.screenWidth - 5 * ri.getScale(), 85 * ri.getScale(), 2 * ri.getScale(),
-				70 * ri.getScale());
-		blength = 140;
-		shape.rect(ri.screenWidth - (blength + 5) * ri.getScale(), 85 * ri.getScale(),
-				blength * ri.getScale(), 2 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 7) * ri.getScale(), 85 * ri.getScale(),
-				2 * ri.getScale(), 1 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 3) * ri.getScale(), 85 * ri.getScale(),
-				4 * ri.getScale(), 3 * ri.getScale());
-		shape.rect(ri.screenWidth - (blength + 1) * ri.getScale(), 85 * ri.getScale(),
-				2 * ri.getScale(), 4 * ri.getScale());
-
-		if (!page) {
-			healthBar.render(ri, shape, pokemon.getCurrentHealthPercent(),
-					ri.screenWidth - 90 * ri.getScale(), 125 * ri.getScale(), 80 * ri.getScale(),
-					6 * ri.getScale());
-		}
-		shape.end();
-		batch.begin();
-		ri.font.draw(batch, pokemon.getName(), ri.screenWidth - 135 * ri.getScale(),
-				155 * ri.getScale());
-		ri.font.draw(batch, "No." + pokemon.getBaseMonster().getFormattedNumber(),
-				10 * ri.getScale(), 90 * ri.getScale());
-
-		batch.draw(image, 30 * ri.getScale(), ri.screenHeight - 60 * ri.getScale(),
-				image.getWidth() * ri.getScale(), image.getHeight() * ri.getScale(), 0, 0,
-				image.getWidth(), image.getHeight(), true, false);
-
-		if (!page) {
-			ri.font.draw(batch, "HP:", ri.screenWidth - 115 * ri.getScale(), 132 * ri.getScale());
-			ri.font.draw(batch, ":L" + pokemon.getLevel(), ri.screenWidth - 80 * ri.getScale(),
-					141 * ri.getScale());
-
-			ri.font.draw(batch, "Status/" + pokemon.getStatus().name,
-					ri.screenWidth - 135 * ri.getScale(), 97 * ri.getScale());
-
-			ri.border.drawBox(batch, 0, 0, 110 * ri.getScale(), 80 * ri.getScale());
-			ri.font.draw(batch, "Attack", 10 * ri.getScale(), (72 - 0 * 14) * ri.getScale());
-			ri.font.draw(batch, "Defense", 10 * ri.getScale(), (72 - 1 * 14) * ri.getScale());
-			ri.font.draw(batch, "Speed", 10 * ri.getScale(), (72 - 2 * 14) * ri.getScale());
-			ri.font.draw(batch, "SAttack", 10 * ri.getScale(), (72 - 3 * 14) * ri.getScale());
-			ri.font.draw(batch, "SDefense", 10 * ri.getScale(), (72 - 4 * 14) * ri.getScale());
-
-			switch (toggle) {
-			case 0: // Stats
-				ri.font.draw(batch, pokemon.getCurrentHealth() + "/ " + stats.get(Stat.HEALTH),
-						ri.screenWidth - 85 * ri.getScale(), 123 * ri.getScale());
-
-				ri.font.draw(batch, Integer.toString(stats.get(Stat.ATTACK)), 80 * ri.getScale(),
-						(72 - 0 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(stats.get(Stat.DEFENSE)), 80 * ri.getScale(),
-						(72 - 1 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(stats.get(Stat.SPEED)), 80 * ri.getScale(),
-						(72 - 2 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(stats.get(Stat.SPECIAL_ATTACK)),
-						80 * ri.getScale(), (72 - 3 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(stats.get(Stat.SPECIAL_DEFENSE)),
-						80 * ri.getScale(), (72 - 4 * 14) * ri.getScale());
-				break;
-			case 1: // IV
-				ri.font.draw(batch, "IV", 2 * ri.getScale(), 155 * ri.getScale());
-				ri.font.draw(batch, pokemon.getCurrentHealth() + "/ " + pokemon.getIV(Stat.HEALTH),
-						ri.screenWidth - 85 * ri.getScale(), 123 * ri.getScale());
-
-				ri.font.draw(batch, Integer.toString(pokemon.getIV(Stat.ATTACK)),
-						80 * ri.getScale(), (72 - 0 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getIV(Stat.DEFENSE)),
-						80 * ri.getScale(), (72 - 1 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getIV(Stat.SPEED)), 80 * ri.getScale(),
-						(72 - 2 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getIV(Stat.SPECIAL_ATTACK)),
-						80 * ri.getScale(), (72 - 3 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getIV(Stat.SPECIAL_DEFENSE)),
-						80 * ri.getScale(), (72 - 4 * 14) * ri.getScale());
-				break;
-			case 2: // EV
-				ri.font.draw(batch, "EV", 2 * ri.getScale(), 155 * ri.getScale());
-				ri.font.draw(batch, pokemon.getCurrentHealth() + "/ " + pokemon.getEV(Stat.HEALTH),
-						ri.screenWidth - 85 * ri.getScale(), 123 * ri.getScale());
-
-				ri.font.draw(batch, Integer.toString(pokemon.getEV(Stat.ATTACK)),
-						80 * ri.getScale(), (72 - 0 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getEV(Stat.DEFENSE)),
-						80 * ri.getScale(), (72 - 1 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getEV(Stat.SPEED)), 80 * ri.getScale(),
-						(72 - 2 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getEV(Stat.SPECIAL_ATTACK)),
-						80 * ri.getScale(), (72 - 3 * 14) * ri.getScale());
-				ri.font.draw(batch, Integer.toString(pokemon.getEV(Stat.SPECIAL_DEFENSE)),
-						80 * ri.getScale(), (72 - 4 * 14) * ri.getScale());
-				break;
-			}
-
-			ri.font.draw(batch, "Type1/ " + pokemon.getBaseMonster().getType(0).name,
-					112 * ri.getScale(), (73 - 0 * 14) * ri.getScale());
-			if (pokemon.getBaseMonster().isDualType()) {
-				ri.font.draw(batch, "Type2/ " + pokemon.getBaseMonster().getType(1).name,
-						112 * ri.getScale(), (73 - 1 * 14) * ri.getScale());
-			}
-			ri.font.draw(batch, "ID/ " + pokemon.getId(), 112 * ri.getScale(),
-					(73 - 2 * 14) * ri.getScale());
-			ri.font.draw(batch, "OT/ " + pokemon.getOT(), 112 * ri.getScale(),
-					(73 - 3 * 14) * ri.getScale());
+	private void toggleStatusBox() {
+		if (toggle >= 2) {
+			toggle = 0;
 		} else {
-			ri.border.drawBox(batch, 0, 0, ri.screenWidth, 80 * ri.getScale());
-
-			ri.font.draw(batch, "EXP/" + pokemon.getExp(), ri.screenWidth - 135 * ri.getScale(),
-					135 * ri.getScale());
-
-			ri.font.draw(batch, "Level Up", ri.screenWidth - 135 * ri.getScale(),
-					121 * ri.getScale());
-			ri.font.draw(batch, expToNextLevel + " to :L" + (pokemon.getLevel() + 1),
-					ri.screenWidth - 125 * ri.getScale(), 107 * ri.getScale());
-
-			for (int i = 0; i < 4; i++) {
-				if (i >= pokemon.getAttacks().size()) {
-					ri.font.draw(batch, "-", 10 * ri.getScale(), (72 - i * 17) * ri.getScale());
-					ri.font.draw(batch, "--", ri.screenWidth - 80 * ri.getScale(),
-							(72 - i * 17) * ri.getScale());
-				} else {
-					ri.font.draw(batch, pokemon.getAttacks().get(i).getName(), 10 * ri.getScale(),
-							(72 - i * 17) * ri.getScale());
-					ri.font.draw(batch,
-							"pp " + pokemon.getAttacks().get(i).getCurrentUsage() + "/"
-									+ pokemon.getAttacks().get(i).getMaxUsage(),
-							ri.screenWidth - 80 * ri.getScale(), (72 - i * 17) * ri.getScale());
-				}
-			}
+			toggle++;
 		}
-		batch.end();
+
+		switch (toggle) {
+		case 0:
+			statsInd.setText("Stats");
+			statsInd.setVisibility(true);
+			attackValue.setText("" + pokemon.getAttack());
+			defenseValue.setText("" + pokemon.getDefense());
+			specialAttackValue.setText("" + pokemon.getSpecialAttack());
+			specialDefenseValue.setText("" + pokemon.getSpecialDefense());
+			speedValue.setText("" + pokemon.getSpeed());
+			break;
+		case 1:
+			statsInd.setText("IVs");
+			statsInd.setVisibility(false);
+			attackValue.setText("" + pokemon.getIV(Stat.ATTACK));
+			defenseValue.setText("" + pokemon.getIV(Stat.DEFENSE));
+			specialAttackValue.setText("" + pokemon.getIV(Stat.SPECIAL_ATTACK));
+			specialDefenseValue.setText("" + pokemon.getIV(Stat.SPECIAL_DEFENSE));
+			speedValue.setText("" + pokemon.getIV(Stat.SPEED));
+			break;
+		case 2:
+			statsInd.setText("EVs");
+			statsInd.setVisibility(false);
+			attackValue.setText("" + pokemon.getEV(Stat.ATTACK));
+			defenseValue.setText("" + pokemon.getEV(Stat.DEFENSE));
+			specialAttackValue.setText("" + pokemon.getEV(Stat.SPECIAL_ATTACK));
+			specialDefenseValue.setText("" + pokemon.getEV(Stat.SPECIAL_DEFENSE));
+			speedValue.setText("" + pokemon.getEV(Stat.SPEED));
+			break;
+		}
+	}
+
+	@Override
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withShapeRenderer((shape) -> {
+			shape.filled((helper) -> {
+				helper.arrowCorner(rh.ri.screenWidth - 5, 2, 80, 80);
+				helper.arrowCorner(rh.ri.screenWidth - 5, 95, 140, 60);
+				if (!page) {
+					helper.percentBar(rh.ri.screenWidth - 90, 125, 80, 6,
+							pokemon.getCurrentHealthPercent());
+				}
+			});
+		});
+
+		rh.withSpriteBatch((batch) -> {
+			image.render(rh, 50, 80);
+			number.render(rh, 10, 64);
+			name.render(rh, rh.ri.screenWidth - 139, 5);
+
+			if (!page) {
+				infoBox.render(rh, rh.ri.screenWidth - 139, 15);
+				statsBox.render(rh, 0, rh.ri.screenHeight - statsBox.getHeight());
+				statsInd.render(rh, 1, 1);
+				infoBox2.render(rh, rh.ri.screenWidth - 105, 78);
+			} else {
+				expBox.render(rh, rh.ri.screenWidth - 139, 25);
+				moveBox.render(rh, 0, rh.ri.screenHeight - moveBox.getHeight());
+			}
+		});
 	}
 
 	@Override
@@ -223,11 +262,8 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 			}
 			break;
 		case select:
-			if (toggle >= 2) {
-				toggle = 0;
-			} else {
-				toggle++;
-			}
+			toggleStatusBox();
+			break;
 		default:
 			break;
 		}

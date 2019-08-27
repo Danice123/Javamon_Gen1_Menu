@@ -1,4 +1,4 @@
-package dev.dankins.javamon.display.screen.menu.helper;
+package dev.dankins.javamon;
 
 public interface TextRender {
 

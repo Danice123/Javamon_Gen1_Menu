@@ -6,6 +6,7 @@ import com.badlogic.gdx.assets.AssetManager;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
+import dev.dankins.javamon.TextRender;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.abstraction.Item;
 import dev.dankins.javamon.data.abstraction.ItemStack;
@@ -18,7 +19,6 @@ import dev.dankins.javamon.display.screen.menu.content.box.BasicBoxContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
 import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
-import dev.dankins.javamon.display.screen.menu.helper.TextRender;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1Bag implements BagMenu {

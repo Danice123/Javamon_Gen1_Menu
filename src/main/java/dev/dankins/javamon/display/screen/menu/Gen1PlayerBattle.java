@@ -1,12 +1,20 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.RightArrow;
+import dev.dankins.javamon.display.screen.menu.content.TextContent;
+import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
+import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
+import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
+import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 import dev.dankins.javamon.logic.battlesystem.BattleAction;
 import dev.dankins.javamon.logic.battlesystem.BattleAction.BattleActionEnum;
@@ -15,10 +23,16 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 
 	private MonsterInstance pokemon;
 
-	private int index = 0;
-	private int mindex = 0;
-	private boolean isMoveMenuOpen = false;
 	private BattleAction action;
+
+	private boolean isMoveMenuOpen = false;
+
+	private Content menu;
+	private RightArrow arrow;
+	private int index = 0;
+
+	private Content moveBox;
+	private ListBox moveMenu;
 
 	@Override
 	public boolean renderBehind() {
@@ -31,42 +45,46 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 	}
 
 	@Override
-	public void init(final AssetManager assets) {
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
+		menu = new BorderBox(assets, 0, 0).setMinHeight(50).setLeftPadding(20)
+				.addContent(new HorzBox(0, 0).setSpacing(12)
+						.addContent(new VertBox(0, 0).addContent(new TextContent(font, "Fight"))
+								.addContent(new TextContent(font, "Item")))
+						.addContent(new VertBox(0, 0).addContent(new TextContent(font, "PKMN"))
+								.addContent(new TextContent(font, "Run"))));
+		arrow = new RightArrow(assets);
+
+		moveBox = new BorderBox(assets, 0, 0).setMinHeight(50).setMinWidth(150).setTopPadding(8)
+				.setBottomPadding(8).addContent(() -> {
+					moveMenu = new ListBox(assets, 0, 0);
+					moveMenu.setSpacing(1);
+					for (int i = 0; i < 4; i++) {
+						if (i < pokemon.getAttacks().size()) {
+							moveMenu.addContent(
+									new TextContent(font, pokemon.getAttacks().get(i).getName()));
+						} else {
+							moveMenu.addContent(new TextContent(font, "-"));
+						}
+					}
+					return moveMenu;
+				});
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		if (pokemon == null) {
-			return;
-		}
-		batch.begin();
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withSpriteBatch((batch) -> {
+			menu.render(rh, rh.ri.screenWidth - menu.getWidth(),
+					rh.ri.screenHeight - menu.getHeight());
+			arrow.render(rh, rh.ri.screenWidth - menu.getWidth() + 9 + 45 * (index % 2),
+					rh.ri.screenHeight - menu.getHeight() + 22 + 15 * (index / 2));
 
-		if (isMoveMenuOpen) {
-			ri.border.drawBox(batch, 50 * ri.getScale(), 0, ri.screenWidth - 50 * ri.getScale(),
-					50 * ri.getScale());
-			for (int i = 0; i < pokemon.getAttacks().size(); i++) {
-				ri.font.draw(batch, pokemon.getAttacks().get(i).getName(),
-						(50 + 20) * ri.getScale(), (15 + 9 * (3 - i)) * ri.getScale());
+			if (isMoveMenuOpen) {
+				moveBox.render(rh, rh.ri.screenWidth - moveBox.getWidth(),
+						rh.ri.screenHeight - moveBox.getHeight());
 			}
-			batch.draw(ri.arrow.rightArrow, (50 + 9) * ri.getScale(),
-					(6 + 9 * (3 - mindex)) * ri.getScale(),
-					ri.arrow.rightArrow.getRegionWidth() * ri.getScale(),
-					ri.arrow.rightArrow.getRegionHeight() * ri.getScale());
-		} else {
-			ri.border.drawBox(batch, 110 * ri.getScale(), 0, ri.screenWidth - 110 * ri.getScale(),
-					50 * ri.getScale());
-			ri.font.draw(batch, "Fight", (110 + 20) * ri.getScale(), 40 * ri.getScale());
-			ri.font.draw(batch, "PKMN", (110 + 80) * ri.getScale(), 40 * ri.getScale());
-			ri.font.draw(batch, "Item", (110 + 20) * ri.getScale(), 20 * ri.getScale());
-			ri.font.draw(batch, "Run", (110 + 80) * ri.getScale(), 20 * ri.getScale());
-			batch.draw(ri.arrow.rightArrow, (110 + 9 + 60 * (index % 2)) * ri.getScale(),
-					(31 - 20 * (index / 2)) * ri.getScale(),
-					ri.arrow.rightArrow.getRegionWidth() * ri.getScale(),
-					ri.arrow.rightArrow.getRegionHeight() * ri.getScale());
-		}
-		batch.end();
+		});
 	}
 
 	@Override
@@ -77,7 +95,22 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 	@Override
 	public void handleMenuKey(final Key key) {
 		if (isMoveMenuOpen) {
-			handleKeyMove(key);
+			switch (key) {
+			case up:
+				moveMenu.decrement();
+				break;
+			case down:
+				moveMenu.increment();
+				break;
+			case accept:
+				action = new BattleAction(BattleActionEnum.Attack, moveMenu.getIndex());
+				ThreadUtils.notifyOnObject(this);
+				break;
+			case deny:
+				isMoveMenuOpen = false;
+				break;
+			default:
+			}
 			return;
 		}
 
@@ -120,29 +153,6 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 				ThreadUtils.notifyOnObject(this);
 				break;
 			}
-			break;
-		default:
-		}
-	}
-
-	private void handleKeyMove(final Key key) {
-		switch (key) {
-		case up:
-			if (mindex > 0) {
-				mindex--;
-			}
-			break;
-		case down:
-			if (mindex < 3) {
-				mindex++;
-			}
-			break;
-		case accept:
-			action = new BattleAction(BattleActionEnum.Attack, mindex);
-			ThreadUtils.notifyOnObject(this);
-			break;
-		case deny:
-			isMoveMenuOpen = false;
 			break;
 		default:
 		}

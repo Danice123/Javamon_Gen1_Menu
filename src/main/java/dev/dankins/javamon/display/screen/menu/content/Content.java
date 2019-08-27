@@ -65,6 +65,10 @@ public abstract class Content {
 
 	protected abstract void renderContent(final RenderHelper rh, int x, int y);
 
+	public boolean isHidden() {
+		return hidden;
+	}
+
 	public Content setVisibility(final boolean isHidden) {
 		hidden = isHidden;
 		return this;

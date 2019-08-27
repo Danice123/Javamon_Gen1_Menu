@@ -6,8 +6,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.utils.Align;
 
 import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.Timer;
 import dev.dankins.javamon.display.screen.RenderHelper;
-import dev.dankins.javamon.display.screen.menu.helper.Timer;
 
 public class TextContent extends Content {
 

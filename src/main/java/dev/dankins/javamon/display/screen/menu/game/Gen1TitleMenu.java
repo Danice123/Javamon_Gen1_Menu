@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
+import dev.dankins.javamon.Timer;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.animation.Animation;
 import dev.dankins.javamon.display.screen.RenderHelper;
@@ -13,7 +14,6 @@ import dev.dankins.javamon.display.screen.menu.content.AnimationContent;
 import dev.dankins.javamon.display.screen.menu.content.Content;
 import dev.dankins.javamon.display.screen.menu.content.ImageContent;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
-import dev.dankins.javamon.display.screen.menu.helper.Timer;
 
 public class Gen1TitleMenu implements Gen1GameMenuPart {
 

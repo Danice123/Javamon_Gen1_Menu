@@ -4,6 +4,7 @@ import com.badlogic.gdx.assets.AssetManager;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
+import dev.dankins.javamon.TextRender;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.screen.RenderHelper;
@@ -11,7 +12,6 @@ import dev.dankins.javamon.display.screen.menu.content.Content;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
-import dev.dankins.javamon.display.screen.menu.helper.TextRender;
 import dev.dankins.javamon.logic.Key;
 
 public class Gen1ItemStorage implements ItemStorageMenu {

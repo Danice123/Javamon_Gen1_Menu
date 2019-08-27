@@ -3,6 +3,7 @@ package dev.dankins.javamon.display.screen.menu.content.box;
 import com.badlogic.gdx.assets.AssetManager;
 
 import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.content.Content;
 import dev.dankins.javamon.display.screen.menu.content.RightArrow;
 
 public class ListBox extends VertBox {
@@ -13,6 +14,7 @@ public class ListBox extends VertBox {
 	private int index;
 	private int topOfList = 0;
 	private Integer listSize = null;
+	private Integer oldSelectedIndex = null;
 
 	public ListBox(final AssetManager assets, final int x, final int y) {
 		super(x, y);
@@ -34,6 +36,11 @@ public class ListBox extends VertBox {
 		return this;
 	}
 
+	public ListBox setOldIndex(final Integer index) {
+		oldSelectedIndex = index;
+		return this;
+	}
+
 	public ListBox toggleArrow() {
 		arrow.toggleSelected();
 		return this;
@@ -50,6 +57,16 @@ public class ListBox extends VertBox {
 
 	public void setIndex(final int index) {
 		this.index = index;
+	}
+
+	public Integer getOldIndex() {
+		return oldSelectedIndex;
+	}
+
+	public void swapEntries() {
+		final Content entryA = contents.get(index);
+		final Content entryB = contents.set(oldSelectedIndex, entryA);
+		contents.set(index, entryB);
 	}
 
 	public void decrement() {
@@ -101,11 +118,21 @@ public class ListBox extends VertBox {
 				yOffset += contents.get(i).getHeight() + spacing;
 			}
 		} else {
+			if (oldSelectedIndex != null) {
+				final Integer oldArrowIndexOffset = contents.stream()
+						.map(content -> content.getHeight() + spacing).limit(oldSelectedIndex)
+						.reduce(0, Integer::sum);
+				arrow.setSelected(true);
+				arrow.render(rh, xOffset, yOffset + 8 + oldArrowIndexOffset);
+				arrow.setSelected(false);
+			}
+
 			final Integer arrowIndexOffset = contents.stream()
 					.map(content -> content.getHeight() + spacing).limit(index)
 					.reduce(0, Integer::sum);
 			arrow.render(rh, xOffset, yOffset + 8 + arrowIndexOffset);
-			super.renderContent(rh, xOffset + arrowIndent, yOffset);
+
+			super.renderContent(rh, x + arrowIndent, y);
 		}
 	}
 }

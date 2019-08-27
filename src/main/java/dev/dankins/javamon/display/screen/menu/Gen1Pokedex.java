@@ -1,15 +1,17 @@
 package dev.dankins.javamon.display.screen.menu;
 
+import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.CollectionLibrary;
 import dev.dankins.javamon.data.monster.MonsterList;
 import dev.dankins.javamon.display.RenderInfo;
+import dev.dankins.javamon.display.screen.RenderHelper;
 import dev.dankins.javamon.display.screen.menu.content.Content;
 import dev.dankins.javamon.display.screen.menu.content.ImageContent;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
@@ -21,14 +23,19 @@ import dev.dankins.javamon.logic.Key;
 
 public class Gen1Pokedex implements PokedexMenu {
 
-	public static final String pokeball = "assets/gui/pokedex/pokeball.png";
-	private Texture pokeballTex;
+	static public final AssetDescriptor<Texture> RESOURCE = new AssetDescriptor<>(
+			"jar:file:menu.jar!/resources/pokeball.png", Texture.class);
 
 	private MonsterList pokemonDB;
 	private CollectionLibrary pokeData;
 
 	private boolean isSubmenuOpen = false;
 	private PokedexMenuAction action;
+
+	private Content title;
+	private ListBox pokemonList;
+	private Content dataPanel;
+	private ListBox submenu;
 
 	@Override
 	public boolean renderBehind() {
@@ -41,87 +48,54 @@ public class Gen1Pokedex implements PokedexMenu {
 		this.pokeData = pokeData;
 	}
 
-	private ListBox pokemonList;
-	private ListBox submenu;
-
-	private Content dataPanel;
-	private Content title;
-
 	@Override
-	public void init(final AssetManager assets) {
-		// TODO: pokeballTex = assets.get(pokeball);
-		pokeballTex = new Texture(pokeball);
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		assets.load(RESOURCE);
+		assets.finishLoading();
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
-		title = new BasicBoxContent(13, 6).addContent(new TextContent("Contents"));
-
-		pokemonList = new ListBox(1, 27).setListSize(7);
+		title = new BasicBoxContent(13, 6).addContent(new TextContent(font, "Contents"));
+		pokemonList = new ListBox(assets, 1, 23).setListSize(7);
 
 		for (int i = 1; i < pokemonDB.getTotalMonsters(); i++) {
+			final int pokemonIterator = i;
 
-			final TextContent number = new TextContent(getPokemonNumber(i)).setVertIndent(-8);
-			final BasicBoxContent numberBox = new BasicBoxContent(0, 0).addContent(number);
-			if (pokeData.isCaught(i)) {
-				numberBox.addContent(new ImageContent(pokeballTex).setHorzIndent(16));
-			}
-
-			final TextContent name = new TextContent(getPokemonName(i));
-			final BasicBoxContent horzBox = new HorzBox(0, 0).setSpacing(24).addContent(numberBox)
-					.addContent(name);
-			pokemonList.addContent(horzBox);
+			pokemonList.setSpacing(2)
+					.addContent(new HorzBox(0, 0)
+							.addContent(new TextContent(font, getPokemonNumber(pokemonIterator)))
+							.addContent(() -> {
+								final HorzBox entry = new HorzBox(0, 0).setSpacing(1);
+								entry.setTopMargin(8);
+								if (pokeData.isCaught(pokemonIterator)) {
+									entry.addContent(new ImageContent(assets.get(RESOURCE))
+											.setTopMargin(4).setLeftMargin(-8).setBottomMargin(-4));
+								}
+								entry.addContent(
+										new TextContent(font, getPokemonName(pokemonIterator)));
+								return entry;
+							}));
 		}
 
-		dataPanel = new VertBox(-36, 23).setSpacing(20)
-				.addContent(new VertBox(0, 0).setSpacing(8).addContent(new TextContent("Seen"))
-						.addContent(new TextContent(Integer.toString(pokeData.amountSeen()))
-								.setHorzIndent(16)))
+		dataPanel = new VertBox(ri.screenWidth - 36, 23)
 				.addContent(
-						new VertBox(0, 0).setSpacing(8).addContent(new TextContent("Own"))
-								.addContent(new TextContent(
-										Integer.toString(pokeData.amountCaught()))
-												.setHorzIndent(16)));
+						new VertBox(0, 0).setSpacing(1).addContent(new TextContent(font, "Seen"))
+								.addContent(new TextContent(font,
+										Integer.toString(pokeData.amountSeen())).setLeftMargin(18)))
+				.addContent(new VertBox(0, 0).setSpacing(1).addContent(new TextContent(font, "Own"))
+						.addContent(new TextContent(font, Integer.toString(pokeData.amountCaught()))
+								.setLeftMargin(18)));
 
-		submenu = new ListBox(-43, 91).setArrowIndent(10).addLine("Data").addLine("Cry")
-				.addLine("Area").addLine("Quit");
-		submenu.toggleArrowHidden();
+		submenu = new ListBox(assets, ri.screenWidth - 43, 91);
+		submenu.setArrowIndent(10).toggleArrowHidden().addContent(new TextContent(font, "Data"))
+				.addContent(new TextContent(font, "Cry")).addContent(new TextContent(font, "Area"))
+				.addContent(new TextContent(font, "Quit"));
 	}
 
-	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
-		shape.begin(ShapeType.Filled);
-		shape.setColor(.2f, .2f, .2f, 0f);
-		shape.rect(0, 0, ri.screenWidth, ri.screenHeight);
-		shape.setColor(1f, 1f, 1f, 0f);
-		shape.rect(1 * ri.getScale(), 1 * ri.getScale(), ri.screenWidth - 2 * ri.getScale(),
-				ri.screenHeight - 2 * ri.getScale());
-		shape.setColor(0f, 0f, 0f, 0f);
-		shape.rect(ri.screenWidth - 45 * ri.getScale(), 0, 2 * ri.getScale(), ri.screenWidth);
-
-		final int xoff = ri.screenWidth - 45 * ri.getScale();
-		final int yoff = 11;
-		for (int i = 0; i < 8; i++) {
-			shape.setColor(0f, 0f, 0f, 0f);
-			shape.rect(xoff - 2 * ri.getScale(), (yoff + i * 17) * ri.getScale(), 6 * ri.getScale(),
-					6 * ri.getScale());
-			shape.setColor(.5f, .5f, .5f, 0f);
-			shape.rect(xoff - 1 * ri.getScale(), (yoff + i * 17 + 1) * ri.getScale(),
-					4 * ri.getScale(), 4 * ri.getScale());
-			shape.setColor(1f, 1f, 1f, 0f);
-			shape.rect(xoff, (yoff + i * 17 + 1) * ri.getScale(), 2 * ri.getScale(),
-					4 * ri.getScale());
+	private String getPokemonNumber(final int i) {
+		if (pokemonDB.getMonster(i) == null) {
+			return "???";
 		}
-
-		shape.setColor(0f, 0f, 0f, 0f);
-		shape.rect(xoff + 4 * ri.getScale(), 83 * ri.getScale(), ri.screenWidth, 1 * ri.getScale());
-		shape.rect(xoff + 4 * ri.getScale(), 80 * ri.getScale(), ri.screenWidth, 2 * ri.getScale());
-		shape.end();
-
-		batch.begin();
-		pokemonList.render(ri, batch, 0, 0);
-		submenu.render(ri, batch, ri.screenWidth / ri.getScale(), 0);
-		dataPanel.render(ri, batch, ri.screenWidth / ri.getScale(), 0);
-		title.render(ri, batch, 0, 0);
-		batch.end();
+		return pokemonDB.getMonster(i).getFormattedNumber();
 	}
 
 	private String getPokemonName(final int i) {
@@ -131,11 +105,37 @@ public class Gen1Pokedex implements PokedexMenu {
 		return "-------------------";
 	}
 
-	private String getPokemonNumber(final int i) {
-		if (pokemonDB.getMonster(i) == null) {
-			return "???";
-		}
-		return pokemonDB.getMonster(i).getFormattedNumber();
+	@Override
+	public void renderScreen(final RenderHelper rh, final float delta) {
+		rh.withShapeRenderer((shape) -> {
+			shape.filled((helper) -> {
+				final Color backgroundColor = new Color(.2f, .2f, .2f, 0f);
+				final Color black = new Color(0f, 0f, 0f, 0f);
+				final Color grey = new Color(.5f, .5f, .5f, 0f);
+				final Color white = new Color(1f, 1f, 1f, 0f);
+
+				helper.rect(backgroundColor, 0, 0, rh.ri.screenWidth, rh.ri.screenHeight);
+				helper.rect(white, 1, 1, rh.ri.screenWidth - 2, rh.ri.screenHeight - 2);
+				helper.rect(black, rh.ri.screenWidth - 45, 0, 2, rh.ri.screenWidth);
+
+				final int xoff = rh.ri.screenWidth - 45;
+				final int yoff = 11;
+				for (int i = 0; i < 8; i++) {
+					helper.rect(black, xoff - 2, yoff + i * 17, 6, 6);
+					helper.rect(grey, xoff - 1, yoff + i * 17 + 1, 4, 4);
+					helper.rect(white, xoff, yoff + i * 17 + 1, 2, 4);
+				}
+				helper.rect(black, xoff + 4, 83, rh.ri.screenWidth, 1);
+				helper.rect(black, xoff + 4, 80, rh.ri.screenWidth, 2);
+			});
+		});
+
+		rh.withSpriteBatch((batch) -> {
+			title.render(rh, 0, 0);
+			pokemonList.render(rh, 0, 0);
+			dataPanel.render(rh, 0, 0);
+			submenu.render(rh, 0, 0);
+		});
 	}
 
 	@Override

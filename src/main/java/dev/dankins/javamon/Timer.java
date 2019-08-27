@@ -1,4 +1,4 @@
-package dev.dankins.javamon.display.screen.menu.helper;
+package dev.dankins.javamon;
 
 public abstract class Timer {
 
@@ -21,5 +21,9 @@ public abstract class Timer {
 	}
 
 	public abstract void ring(float delta, float timeSinceRung);
+
+	protected void done() {
+		ThreadUtils.notifyOnObject(this);
+	}
 
 }

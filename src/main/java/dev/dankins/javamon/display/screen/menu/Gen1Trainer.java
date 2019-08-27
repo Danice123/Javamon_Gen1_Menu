@@ -1,7 +1,6 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.Texture;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
@@ -20,7 +19,7 @@ import dev.dankins.javamon.logic.abstraction.Player;
 public class Gen1Trainer implements TrainerMenu {
 
 	private Player player;
-	private Texture playerImage;
+
 	private Content playerWindow;
 
 	@Override
@@ -35,8 +34,9 @@ public class Gen1Trainer implements TrainerMenu {
 
 	@Override
 	public void init(final AssetManager assets, final RenderInfo ri) {
+		assets.load(player.getImage());
+		assets.finishLoading();
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
-		playerImage = player.getImage(assets);
 
 		playerWindow = new BorderBox(assets,
 				0, 0)
@@ -56,7 +56,8 @@ public class Gen1Trainer implements TrainerMenu {
 																.addContent(new TextContent(font,
 																		"TIME/ 10:48"))
 																.setTopMargin(10))
-												.addContent(new ImageContent(playerImage)));
+												.addContent(new ImageContent(
+														assets.get(player.getImage()))));
 	}
 
 	@Override

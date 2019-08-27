@@ -1,16 +1,17 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
+import dev.dankins.javamon.FontHelper;
+import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.data.abstraction.Inventory;
 import dev.dankins.javamon.data.abstraction.Item;
 import dev.dankins.javamon.data.abstraction.ItemStack;
 import dev.dankins.javamon.display.RenderInfo;
-import dev.dankins.javamon.display.screen.menu.content.CurrencyContent;
+import dev.dankins.javamon.display.screen.RenderHelper;
 import dev.dankins.javamon.display.screen.menu.content.Content;
+import dev.dankins.javamon.display.screen.menu.content.CurrencyContent;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
@@ -59,11 +60,17 @@ public class Gen1Shop implements ShopMenu {
 	private CurrencyContent costBox;
 
 	@Override
-	public void init(final AssetManager assets) {
-		menu = new ListBox(0, 0).addLine("Buy").addLine("Sell").addLine("Exit");
-		window = new BorderBox(0, 0, 60, menu.getHeight()).addContent(menu);
+	public void init(final AssetManager assets, final RenderInfo ri) {
+		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
-		buyMenu = new ListBox(0, 0);
+		window = new BorderBox(assets, 0, 0).addContent(() -> {
+			menu = new ListBox(assets, 0, 0);
+			menu.addContent(new TextContent(font, "Buy")).addContent(new TextContent(font, "Sell"))
+					.addContent(new TextContent(font, "Exit"));
+			return menu;
+		});
+
+		buyMenu = new ListBox(assets, 0, 0);
 		for (final Item item : shop.getItems()) {
 			buyMenu.addContent(
 					new HorzBox(0, 0).setSpacing(48).addContent(new TextContent(item.getName()))
@@ -85,8 +92,7 @@ public class Gen1Shop implements ShopMenu {
 	}
 
 	@Override
-	public void renderScreen(final RenderInfo ri, final SpriteBatch batch,
-			final ShapeRenderer shape, final float delta) {
+	public void renderScreen(final RenderHelper rh, final float delta) {
 		if (money == null) {
 			money = new BorderBox(-80, 0, 80, 36)
 					.addContent(new TextContent("$" + player.getMoney()).setHorzIndent(10));
@@ -104,8 +110,7 @@ public class Gen1Shop implements ShopMenu {
 				}
 			}
 			sellMenu.addContent(new TextContent("Cancel"));
-			sellWindow = new BorderBox(20, 10, 140, sellMenu.getHeight())
-					.addContent(sellMenu);
+			sellWindow = new BorderBox(20, 10, 140, sellMenu.getHeight()).addContent(sellMenu);
 		}
 
 		batch.begin();

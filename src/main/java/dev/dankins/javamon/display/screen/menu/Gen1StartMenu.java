@@ -92,7 +92,11 @@ public class Gen1StartMenu implements StartMenu {
 				ThreadUtils.notifyOnObject(this);
 				break;
 			case 1:
-				startMenuOption = StartMenuOptions.Pokemon;
+				if (hasPokedex && !hasPokemon) {
+					startMenuOption = StartMenuOptions.Pokedex;
+				} else {
+					startMenuOption = StartMenuOptions.Pokemon;
+				}
 				ThreadUtils.notifyOnObject(this);
 				break;
 			case 2:
