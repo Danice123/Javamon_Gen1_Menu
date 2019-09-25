@@ -11,6 +11,7 @@ import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.logic.Key;
+import dev.dankins.javamon.logic.abstraction.Player;
 
 public class Gen1StartMenu implements StartMenu {
 
@@ -27,9 +28,9 @@ public class Gen1StartMenu implements StartMenu {
 	}
 
 	@Override
-	public void setupMenu(final boolean hasPokemon, final boolean hasPokedex) {
-		this.hasPokedex = hasPokedex;
-		this.hasPokemon = hasPokemon;
+	public void setupMenu(final Player player) {
+		hasPokedex = player.getStrings().containsKey("Has_Pokedex");
+		hasPokemon = player.getParty().size() > 0;
 	}
 
 	@Override

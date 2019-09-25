@@ -12,6 +12,7 @@ import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.logic.Key;
+import dev.dankins.javamon.logic.abstraction.Player;
 
 public class Gen1PC implements PCMenu {
 
@@ -29,9 +30,9 @@ public class Gen1PC implements PCMenu {
 	}
 
 	@Override
-	public void setupMenu(final boolean knowsStorageGuy, final String playerName) {
-		this.knowsStorageGuy = knowsStorageGuy;
-		this.playerName = playerName;
+	public void setupMenu(final Player player) {
+		playerName = player.getName();
+		knowsStorageGuy = player.getStrings().containsKey("knowsStorageGuy");
 	}
 
 	@Override

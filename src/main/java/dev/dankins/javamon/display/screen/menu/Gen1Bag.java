@@ -138,6 +138,7 @@ public class Gen1Bag implements BagMenu {
 				}
 				break;
 			case deny:
+				amountWindow.setVisibility(true);
 				isAmountMenuOpen = false;
 				break;
 			default:
@@ -157,6 +158,7 @@ public class Gen1Bag implements BagMenu {
 				actionOnItem();
 				break;
 			case deny:
+				useWindow.setVisibility(true);
 				isSubmenuOpen = false;
 				break;
 			default:
