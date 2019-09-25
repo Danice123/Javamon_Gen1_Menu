@@ -23,6 +23,7 @@ public class Gen1Choicebox implements Choicebox {
 	private Content window;
 	private ListBox menu;
 	private Content textbox;
+	private TextContent textContent;
 
 	@Override
 	public boolean renderBehind() {
@@ -48,24 +49,37 @@ public class Gen1Choicebox implements Choicebox {
 		}).setLeftPadding(6);
 
 		textbox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(50)
-				.addContent(new TextContent(font, text).setWrappingWidth(ri.screenWidth - 20))
-				.setLeftPadding(8).setTopPadding(10);
+				.addContent(() -> {
+					textContent = new TextContent(font, text).setWrappingWidth(ri.screenWidth - 20)
+							.setIsProgressive();
+					return textContent;
+				}).setLeftPadding(8).setTopPadding(10);
 	}
 
 	@Override
 	public void renderScreen(final RenderHelper rh, final float delta) {
 		rh.withSpriteBatch((batch) -> {
-			window.render(rh, 0, 0);
+			if (textContent.isFinished()) {
+				window.render(rh, 0, 0);
+			}
 			textbox.render(rh, 0, rh.ri.screenHeight - textbox.getHeight());
 		});
 	}
 
 	@Override
 	public void tickSelf(final float delta) {
+		textContent.tickSelf(delta);
 	}
 
 	@Override
 	public void handleMenuKey(final Key key) {
+		if (!textContent.isFinished()) {
+			if (key == Key.accept || key == Key.deny) {
+				textContent.finishText();
+			}
+			return;
+		}
+
 		switch (key) {
 		case up:
 			menu.decrement();

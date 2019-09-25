@@ -50,7 +50,7 @@ public class TextContent extends Content {
 		return text;
 	}
 
-	public void setText(final String text) {
+	public synchronized void setText(final String text) {
 		this.text = text;
 		charactersToShow = 1;
 		if (wrappingWidth != null) {
@@ -83,7 +83,7 @@ public class TextContent extends Content {
 		}
 	}
 
-	public void finishText() {
+	public synchronized void finishText() {
 		charactersToShow = text.length();
 	}
 
@@ -108,7 +108,7 @@ public class TextContent extends Content {
 		}
 	};
 
-	public void tickSelf(final float delta) {
+	public synchronized void tickSelf(final float delta) {
 		charTimer.tick(delta);
 	}
 

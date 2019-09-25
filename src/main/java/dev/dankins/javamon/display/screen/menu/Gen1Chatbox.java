@@ -65,7 +65,6 @@ public class Gen1Chatbox implements Chatbox {
 		if (key == Key.accept || key == Key.deny) {
 			if (!textContent.isFinished()) {
 				textContent.finishText();
-				ThreadUtils.sleep(100);
 				return;
 			}
 			if (!isFinished()) {
