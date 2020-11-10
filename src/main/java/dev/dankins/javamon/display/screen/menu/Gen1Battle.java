@@ -75,9 +75,9 @@ public class Gen1Battle implements BattleMenu {
 		assets.load(EMPTY_POKEBALL);
 		assets.load(player.getBackImage());
 		assets.load(enemy.getImage());
-		player.getParty().forEach(
+		player.getParty_().forEach(
 				monster -> assets.load("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
-		enemy.getParty().forEach(
+		enemy.getParty_().forEach(
 				monster -> assets.load("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
 		assets.finishLoading();
 
@@ -88,7 +88,7 @@ public class Gen1Battle implements BattleMenu {
 		playerImage.setVisibility(true);
 		playerInfo = new HorzBox(0, 0).setSpacing(2);
 		for (int i = 0; i < 6; i++) {
-			if (i < Iterables.size(player.getParty())) {
+			if (i < Iterables.size(player.getParty_())) {
 				playerInfo.addContent(new ImageContent(assets.get(POKEBALL)));
 			} else {
 				playerInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));
@@ -111,7 +111,7 @@ public class Gen1Battle implements BattleMenu {
 		enemyImage.setVisibility(true);
 		enemyInfo = new HorzBox(0, 0).setSpacing(2);
 		for (int i = 0; i < 6; i++) {
-			if (i < Iterables.size(enemy.getParty())) {
+			if (i < Iterables.size(enemy.getParty_())) {
 				enemyInfo.addContent(new ImageContent(assets.get(POKEBALL)));
 			} else {
 				enemyInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));

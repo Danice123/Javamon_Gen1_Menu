@@ -31,7 +31,7 @@ public class Gen1StartMenu implements StartMenu {
 	@Override
 	public void setupMenu(final Player player) {
 		hasPokedex = player.getStrings().containsKey("Has_Pokedex");
-		hasPokemon = Iterables.size(player.getParty()) > 0;
+		hasPokemon = Iterables.size(player.getParty_()) > 0;
 	}
 
 	@Override
