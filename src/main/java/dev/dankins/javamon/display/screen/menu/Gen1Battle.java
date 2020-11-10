@@ -5,12 +5,14 @@ import java.util.List;
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.Timer;
+import dev.dankins.javamon.battle.display.event.Event;
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.screen.RenderHelper;
@@ -73,12 +75,10 @@ public class Gen1Battle implements BattleMenu {
 		assets.load(EMPTY_POKEBALL);
 		assets.load(player.getBackImage());
 		assets.load(enemy.getImage());
-		player.getParty().stream()
-				.forEach(monster -> assets.load(
-						"pokemon/back/" + monster.getBaseMonster().getNumber() + ".png",
-						Texture.class));
-		enemy.getParty().stream().forEach(monster -> assets
-				.load("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
+		player.getParty().forEach(
+				monster -> assets.load("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
+		enemy.getParty().forEach(
+				monster -> assets.load("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
 		assets.finishLoading();
 
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
@@ -88,7 +88,7 @@ public class Gen1Battle implements BattleMenu {
 		playerImage.setVisibility(true);
 		playerInfo = new HorzBox(0, 0).setSpacing(2);
 		for (int i = 0; i < 6; i++) {
-			if (i < player.getParty().size()) {
+			if (i < Iterables.size(player.getParty())) {
 				playerInfo.addContent(new ImageContent(assets.get(POKEBALL)));
 			} else {
 				playerInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));
@@ -99,23 +99,19 @@ public class Gen1Battle implements BattleMenu {
 		playerMonsterInfo.setVisibility(true);
 		playerChanger = (monster) -> {
 			playerMonsterInfo.clearContent().addContent(new TextContent(font, monster.getName()))
-					.addContent(
-							new HorzBox(0, 0).setSpacing(2)
-									.addContent(new TextContent(miniFont, ":L")).addContent(
-											new TextContent(font, "" + monster.getLevel())
-													.setTopMargin(-2))
-									.setLeftMargin(50))
+					.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+							.addContent(new TextContent(font, "" + monster.getLevel()).setTopMargin(-2))
+							.setLeftMargin(50))
 					.addContent(new TextContent(miniFont, "HP:").setTopMargin(1))
-					.addContent(new TextContent(font,
-							monster.getCurrentHealth() + "/" + monster.getHealth())
-									.setLeftMargin(30).setTopMargin(1));
+					.addContent(new TextContent(font, monster.getCurrentHealth() + "/" + monster.getHealth())
+							.setLeftMargin(30).setTopMargin(1));
 		};
 
 		enemyImage = new ImageContent(assets.get(enemy.getImage()));
 		enemyImage.setVisibility(true);
 		enemyInfo = new HorzBox(0, 0).setSpacing(2);
 		for (int i = 0; i < 6; i++) {
-			if (i < enemy.getParty().size()) {
+			if (i < Iterables.size(enemy.getParty())) {
 				enemyInfo.addContent(new ImageContent(assets.get(POKEBALL)));
 			} else {
 				enemyInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));
@@ -126,12 +122,9 @@ public class Gen1Battle implements BattleMenu {
 		enemyMonsterInfo.setVisibility(true);
 		enemyChanger = (monster) -> {
 			enemyMonsterInfo.clearContent().addContent(new TextContent(font, monster.getName()))
-					.addContent(
-							new HorzBox(0, 0).setSpacing(2)
-									.addContent(new TextContent(miniFont, ":L")).addContent(
-											new TextContent(font, "" + monster.getLevel())
-													.setTopMargin(-2))
-									.setLeftMargin(35))
+					.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+							.addContent(new TextContent(font, "" + monster.getLevel()).setTopMargin(-2))
+							.setLeftMargin(35))
 					.addContent(new TextContent(miniFont, "HP:").setLeftMargin(10).setTopMargin(2));
 		};
 
@@ -142,6 +135,12 @@ public class Gen1Battle implements BattleMenu {
 		}).setLeftPadding(8).setTopPadding(10);
 
 		ThreadUtils.notifyOnObject(initLock);
+	}
+
+	@Override
+	public void sendEvent(Event event) {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
@@ -193,8 +192,8 @@ public class Gen1Battle implements BattleMenu {
 	public void enemyMonster(final MonsterInstance monster) {
 		enemyChanger.change(monster);
 		enemyCurrentHealth = monster.getCurrentHealthPercent();
-		enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png",
-				Texture.class)).setLeftMargin(0);
+		enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
+				.setLeftMargin(0);
 		enemyMonsterInfo.setVisibility(false);
 	}
 
@@ -202,8 +201,8 @@ public class Gen1Battle implements BattleMenu {
 	public void playerMonster(final MonsterInstance monster) {
 		playerChanger.change(monster);
 		playerCurrentHealth = monster.getCurrentHealthPercent();
-		playerImage.setTexture(assets.get(
-				"pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
+		playerImage
+				.setTexture(assets.get("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
 				.setScale(2).setLeftMargin(0).setTopMargin(4);
 		playerMonsterInfo.setVisibility(false);
 	}
@@ -216,8 +215,7 @@ public class Gen1Battle implements BattleMenu {
 	@Override
 	public void updateHealth(final MonsterInstance player, final MonsterInstance enemy) {
 		if (player.getCurrentHealthPercent() != playerCurrentHealth) {
-			final HealthTimer healthTimer = new HealthTimer(playerCurrentHealth,
-					player.getCurrentHealthPercent()) {
+			final HealthTimer healthTimer = new HealthTimer(playerCurrentHealth, player.getCurrentHealthPercent()) {
 				@Override
 				protected void modifyValue(final float current) {
 					playerCurrentHealth = current;
@@ -232,8 +230,7 @@ public class Gen1Battle implements BattleMenu {
 			}
 		}
 		if (enemy.getCurrentHealthPercent() != enemyCurrentHealth) {
-			final HealthTimer healthTimer = new HealthTimer(enemyCurrentHealth,
-					enemy.getCurrentHealthPercent()) {
+			final HealthTimer healthTimer = new HealthTimer(enemyCurrentHealth, enemy.getCurrentHealthPercent()) {
 				@Override
 				protected void modifyValue(final float current) {
 					enemyCurrentHealth = current;

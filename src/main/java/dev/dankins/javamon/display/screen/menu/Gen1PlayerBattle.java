@@ -17,13 +17,13 @@ import dev.dankins.javamon.display.screen.menu.content.box.ListBox;
 import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
 import dev.dankins.javamon.logic.battlesystem.BattleAction;
-import dev.dankins.javamon.logic.battlesystem.BattleAction.BattleActionEnum;
 
 public class Gen1PlayerBattle implements PlayerBattleMenu {
 
 	private MonsterInstance pokemon;
 
 	private BattleAction action;
+	private Integer actionChoice;
 
 	private boolean isMoveMenuOpen = false;
 
@@ -56,14 +56,13 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 								.addContent(new TextContent(font, "Run"))));
 		arrow = new RightArrow(assets);
 
-		moveBox = new BorderBox(assets, 0, 0).setMinHeight(50).setMinWidth(150).setTopPadding(8)
-				.setBottomPadding(8).addContent(() -> {
+		moveBox = new BorderBox(assets, 0, 0).setMinHeight(50).setMinWidth(150).setTopPadding(8).setBottomPadding(8)
+				.addContent(() -> {
 					moveMenu = new ListBox(assets, 0, 0);
 					moveMenu.setSpacing(1);
 					for (int i = 0; i < 4; i++) {
 						if (i < pokemon.getAttacks().size()) {
-							moveMenu.addContent(
-									new TextContent(font, pokemon.getAttacks().get(i).getName()));
+							moveMenu.addContent(new TextContent(font, pokemon.getAttacks().get(i).getName()));
 						} else {
 							moveMenu.addContent(new TextContent(font, "-"));
 						}
@@ -75,14 +74,12 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 	@Override
 	public void renderScreen(final RenderHelper rh, final float delta) {
 		rh.withSpriteBatch((batch) -> {
-			menu.render(rh, rh.ri.screenWidth - menu.getWidth(),
-					rh.ri.screenHeight - menu.getHeight());
+			menu.render(rh, rh.ri.screenWidth - menu.getWidth(), rh.ri.screenHeight - menu.getHeight());
 			arrow.render(rh, rh.ri.screenWidth - menu.getWidth() + 9 + 45 * (index % 2),
 					rh.ri.screenHeight - menu.getHeight() + 22 + 15 * (index / 2));
 
 			if (isMoveMenuOpen) {
-				moveBox.render(rh, rh.ri.screenWidth - moveBox.getWidth(),
-						rh.ri.screenHeight - moveBox.getHeight());
+				moveBox.render(rh, rh.ri.screenWidth - moveBox.getWidth(), rh.ri.screenHeight - moveBox.getHeight());
 			}
 		});
 	}
@@ -103,7 +100,8 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 				moveMenu.increment();
 				break;
 			case accept:
-				action = new BattleAction(BattleActionEnum.Attack, moveMenu.getIndex());
+				action = BattleAction.Attack;
+				actionChoice = moveMenu.getIndex();
 				ThreadUtils.notifyOnObject(this);
 				break;
 			case deny:
@@ -141,15 +139,15 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 				isMoveMenuOpen = true;
 				break;
 			case 1: // Switch menu
-				action = new BattleAction(BattleActionEnum.Switch, 0);
+				action = BattleAction.Switch;
 				ThreadUtils.notifyOnObject(this);
 				break;
 			case 2: // Item menu
-				action = new BattleAction(BattleActionEnum.Item, 0);
+				action = BattleAction.Item;
 				ThreadUtils.notifyOnObject(this);
 				break;
 			case 3: // Run
-				action = new BattleAction(BattleActionEnum.Run, 0);
+				action = BattleAction.Run;
 				ThreadUtils.notifyOnObject(this);
 				break;
 			}
@@ -161,6 +159,11 @@ public class Gen1PlayerBattle implements PlayerBattleMenu {
 	@Override
 	public BattleAction getAction() {
 		return action;
+	}
+
+	@Override
+	public Integer getActionChoice() {
+		return actionChoice;
 	}
 
 }

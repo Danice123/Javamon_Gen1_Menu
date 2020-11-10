@@ -1,6 +1,7 @@
 package dev.dankins.javamon.display.screen.menu;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.google.common.collect.Iterables;
 
 import dev.dankins.javamon.FontHelper;
 import dev.dankins.javamon.MenuLoader;
@@ -30,7 +31,7 @@ public class Gen1StartMenu implements StartMenu {
 	@Override
 	public void setupMenu(final Player player) {
 		hasPokedex = player.getStrings().containsKey("Has_Pokedex");
-		hasPokemon = player.getParty().size() > 0;
+		hasPokemon = Iterables.size(player.getParty()) > 0;
 	}
 
 	@Override
@@ -51,10 +52,8 @@ public class Gen1StartMenu implements StartMenu {
 			if (hasPokemon) {
 				menu.addContent(new TextContent(font, "Pokemon"));
 			}
-			menu.addContent(new TextContent(font, "Bag"))
-					.addContent(new TextContent(font, "Trainer"))
-					.addContent(new TextContent(font, "Save"))
-					.addContent(new TextContent(font, "Options"))
+			menu.addContent(new TextContent(font, "Bag")).addContent(new TextContent(font, "Trainer"))
+					.addContent(new TextContent(font, "Save")).addContent(new TextContent(font, "Options"))
 					.addContent(new TextContent(font, "Exit"));
 			return menu;
 		}).setLeftMargin(6).alignRight();

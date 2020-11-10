@@ -61,25 +61,19 @@ public class Gen1Party implements PartyMenu {
 		pokemonStats = new VertBox(160, 2).setSpacing(4);
 		for (final MonsterInstance monster : party) {
 			pokemonList.addContent(new HorzBox(0, 0)
-					.addContent(
-							new ImageContent(assets.get(RESOURCE)).setTopMargin(4).setLeftMargin(2))
-					.addContent(new VertBox(0, -8).setSpacing(3)
-							.addContent(new TextContent(font, monster.getName()))
+					.addContent(new ImageContent(assets.get(RESOURCE)).setTopMargin(4).setLeftMargin(2))
+					.addContent(new VertBox(0, -8).setSpacing(3).addContent(new TextContent(font, monster.getName()))
 							.addContent(new TextContent(hpFont, "HP:").setLeftMargin(9))));
 
 			pokemonStats.addContent(new VertBox(0, 0).setSpacing(2)
-					.addContent(new HorzBox(0, 0)
-							.setSpacing(2).addContent(new TextContent(hpFont, ":L"))
-							.addContent(new TextContent(font, "" + monster.getLevel())
-									.setTopMargin(-2)))
-					.addContent(new TextContent(font,
-							monster.getCurrentHealth() + "/ " + monster.getHealth())));
+					.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(hpFont, ":L"))
+							.addContent(new TextContent(font, "" + monster.getLevel()).setTopMargin(-2)))
+					.addContent(new TextContent(font, monster.getCurrentHealth() + "/ " + monster.getHealth())));
 		}
 
 		textBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth);
 		textBox.setMinHeight(50).addContent(() -> {
-			textContent = new TextContent(font, "Choose a Pokemon.")
-					.setWrappingWidth(ri.screenWidth - 20);
+			textContent = new TextContent(font, "Choose a Pokemon.").setWrappingWidth(ri.screenWidth - 20);
 			return textContent;
 		}).setLeftPadding(8).setTopPadding(10);
 
@@ -87,16 +81,13 @@ public class Gen1Party implements PartyMenu {
 			submenu = new ListBox(assets, 0, 0);
 			switch (type) {
 			case View:
-				submenu.addContent(new TextContent(font, "Status"))
-						.addContent(new TextContent(font, "Switch"));
+				submenu.addContent(new TextContent(font, "Status")).addContent(new TextContent(font, "Switch"));
 				break;
 			case Switch:
-				submenu.addContent(new TextContent(font, "Switch"))
-						.addContent(new TextContent(font, "Status"));
+				submenu.addContent(new TextContent(font, "Switch")).addContent(new TextContent(font, "Status"));
 				break;
 			case UseItem:
-				submenu.addContent(new TextContent(font, "Use"))
-						.addContent(new TextContent(font, "Status"));
+				submenu.addContent(new TextContent(font, "Use")).addContent(new TextContent(font, "Status"));
 				break;
 			}
 			submenu.addContent(new TextContent(font, "Cancel"));
@@ -108,9 +99,10 @@ public class Gen1Party implements PartyMenu {
 	public void renderScreen(final RenderHelper rh, final float delta) {
 		rh.withShapeRenderer((shape) -> {
 			shape.filled((helper) -> {
-				for (int i = 0; i < party.size(); i++) {
-					helper.percentBar(55, rh.ri.screenHeight - (16 + 18 * i), 80, 6,
-							party.get(i).getCurrentHealthPercent());
+				int i = 0;
+				for (MonsterInstance monster : party) {
+					helper.percentBar(55, rh.ri.screenHeight - (16 + 18 * i), 80, 6, monster.getCurrentHealthPercent());
+					i++;
 				}
 			});
 		});
