@@ -44,8 +44,7 @@ public class Gen1Chatbox implements Chatbox {
 
 		box = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth);
 		box.setMinHeight(50).addContent(() -> {
-			textContent = new TextContent(font, text[index]).setWrappingWidth(ri.screenWidth - 20)
-					.setIsProgressive();
+			textContent = new TextContent(font, text[index]).setWrappingWidth(ri.screenWidth - 20).setIsProgressive();
 			return textContent;
 		}).setLeftPadding(8).setTopPadding(10);
 	}

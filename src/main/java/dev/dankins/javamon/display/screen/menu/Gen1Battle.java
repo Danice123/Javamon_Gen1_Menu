@@ -13,7 +13,11 @@ import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.Timer;
 import dev.dankins.javamon.battle.display.event.Event;
+import dev.dankins.javamon.battle.display.event.TargetedEvent;
+import dev.dankins.javamon.battle.display.event.attack.AttackEvent;
+import dev.dankins.javamon.battle.display.event.attack.TypeEffectivenessEvent;
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
+import dev.dankins.javamon.data.monster.instance.Trainer;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.screen.RenderHelper;
 import dev.dankins.javamon.display.screen.menu.content.ImageContent;
@@ -22,8 +26,6 @@ import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
 import dev.dankins.javamon.display.screen.menu.content.box.HorzBox;
 import dev.dankins.javamon.display.screen.menu.content.box.VertBox;
 import dev.dankins.javamon.logic.Key;
-import dev.dankins.javamon.logic.abstraction.Player;
-import dev.dankins.javamon.logic.abstraction.Trainer;
 
 public class Gen1Battle implements BattleMenu {
 
@@ -36,7 +38,7 @@ public class Gen1Battle implements BattleMenu {
 
 	private AssetManager assets;
 
-	private Player player;
+	private Trainer player;
 	private HorzBox playerInfo;
 	private VertBox playerMonsterInfo;
 	private MonsterDisplayChanger playerChanger;
@@ -52,6 +54,8 @@ public class Gen1Battle implements BattleMenu {
 
 	private BorderBox textBox;
 	private TextContent textContent;
+	private boolean verifyText = false;
+	private Object textLock = new Object();
 
 	private final Object initLock = new Object();
 	private final List<Timer> animations = Lists.newArrayList();
@@ -62,7 +66,7 @@ public class Gen1Battle implements BattleMenu {
 	}
 
 	@Override
-	public void setupMenu(final Player player, final Trainer enemy) {
+	public void setupMenu(final Trainer player, final Trainer enemy) {
 		this.player = player;
 		this.enemy = enemy;
 	}
@@ -73,7 +77,7 @@ public class Gen1Battle implements BattleMenu {
 		assets.load(POKEBALL);
 		assets.load(DEAD_POKEBALL);
 		assets.load(EMPTY_POKEBALL);
-		assets.load(player.getBackImage());
+		assets.load(player.getImage());
 		assets.load(enemy.getImage());
 		player.getParty_().forEach(
 				monster -> assets.load("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
@@ -84,7 +88,7 @@ public class Gen1Battle implements BattleMenu {
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 		final FontHelper miniFont = MenuLoader.getFont(assets, ri, 6);
 
-		playerImage = new ImageContent(assets.get(player.getBackImage()));
+		playerImage = new ImageContent(assets.get(player.getImage()));
 		playerImage.setVisibility(true);
 		playerInfo = new HorzBox(0, 0).setSpacing(2);
 		for (int i = 0; i < 6; i++) {
@@ -130,7 +134,7 @@ public class Gen1Battle implements BattleMenu {
 
 		textBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth);
 		textBox.setMinHeight(50).addContent(() -> {
-			textContent = new TextContent(font, "").setWrappingWidth(ri.screenWidth - 20);
+			textContent = new TextContent(font, "").setWrappingWidth(ri.screenWidth - 20).setIsProgressive();
 			return textContent;
 		}).setLeftPadding(8).setTopPadding(10);
 
@@ -139,11 +143,54 @@ public class Gen1Battle implements BattleMenu {
 
 	@Override
 	public void sendEvent(Event event) {
-		// TODO Auto-generated method stub
-
+		switch (event.getType()) {
+		case StartBattle:
+			startBattle();
+			break;
+		case Attack: {
+			final AttackEvent e = (AttackEvent) event;
+			if (player.getKey() == e.key) {
+				setMessageBoxContentsVerify(player.getCurrentMonster_().getName() + " used " + e.attack.getName());
+			} else {
+				setMessageBoxContentsVerify(
+						"Enemy " + enemy.getCurrentMonster_().getName() + " used " + e.attack.getName());
+			}
+			break;
+		}
+		case UpdateHealth:
+			updateHealth(player.getCurrentMonster_(), enemy.getCurrentMonster_());
+			break;
+		case TypeEffectiveness: {
+			final TypeEffectivenessEvent e = (TypeEffectivenessEvent) event;
+			if (e.effectM() != null) {
+				setMessageBoxContentsVerify(e.effectM());
+			}
+			break;
+		}
+		case CriticalHit:
+			setMessageBoxContentsVerify("It was a critical hit!");
+			break;
+		case FaintMonster: {
+			final TargetedEvent e = (TargetedEvent) event;
+			if (player.getKey() == e.getTarget()) {
+				setMessageBoxContentsVerify(player.getCurrentMonster_().getName() + " fainted!");
+			} else {
+				setMessageBoxContentsVerify("Enemy " + enemy.getCurrentMonster_().getName() + " fainted!");
+			}
+			break;
+		}
+		case TrainerLoss:
+			setMessageBoxContentsVerify(player.getName() + " defeated " + enemy.getName() + "!");
+			setMessageBoxContentsVerify(enemy.getTrainerLossQuip());
+			break;
+		case EndBattle:
+			ThreadUtils.notifyOnObject(this);
+			break;
+		default:
+			System.out.println("Unhandled event " + event.getType());
+		}
 	}
 
-	@Override
 	public void startBattle() {
 		ThreadUtils.waitOnObject(initLock);
 		playerImage.setLeftMargin(PLAYER_OFF_BEGINNING);
@@ -162,9 +209,19 @@ public class Gen1Battle implements BattleMenu {
 		if (enemy.isTrainer()) {
 			enemyInfo.setVisibility(false);
 		}
+
+		setMessageBoxContentsVerify(enemy.getName() + " wants to fight!");
+		moveEnemyFromWindow();
+		setMessageBoxContents(enemy.getName() + " sent out " + enemy.getCurrentMonster_().getName() + "!");
+		enemyMonster(enemy.getCurrentMonster_());
+		movePlayerFromWindow();
+		setMessageBoxContents("Go! " + player.getCurrentMonster_().getName() + "!");
+		playerMonster(player.getCurrentMonster_());
+		verifyText = true;
+		ThreadUtils.waitOnObject(textLock);
+		setMessageBoxContents("");
 	}
 
-	@Override
 	public void moveEnemyFromWindow() {
 		enemyInfo.setVisibility(true);
 		synchronized (animations) {
@@ -176,7 +233,6 @@ public class Gen1Battle implements BattleMenu {
 		}
 	}
 
-	@Override
 	public void movePlayerFromWindow() {
 		playerInfo.setVisibility(true);
 		synchronized (animations) {
@@ -188,7 +244,6 @@ public class Gen1Battle implements BattleMenu {
 		}
 	}
 
-	@Override
 	public void enemyMonster(final MonsterInstance monster) {
 		enemyChanger.change(monster);
 		enemyCurrentHealth = monster.getCurrentHealthPercent();
@@ -197,7 +252,6 @@ public class Gen1Battle implements BattleMenu {
 		enemyMonsterInfo.setVisibility(false);
 	}
 
-	@Override
 	public void playerMonster(final MonsterInstance monster) {
 		playerChanger.change(monster);
 		playerCurrentHealth = monster.getCurrentHealthPercent();
@@ -207,12 +261,21 @@ public class Gen1Battle implements BattleMenu {
 		playerMonsterInfo.setVisibility(false);
 	}
 
-	@Override
 	public void setMessageBoxContents(final String message) {
 		textContent.setText(message);
+		if (message != "") {
+			ThreadUtils.waitOnObject(textLock);
+		}
 	}
 
-	@Override
+	public void setMessageBoxContentsVerify(final String message) {
+		textContent.setText(message);
+		verifyText = true;
+		if (message != "") {
+			ThreadUtils.waitOnObject(textLock);
+		}
+	}
+
 	public void updateHealth(final MonsterInstance player, final MonsterInstance enemy) {
 		if (player.getCurrentHealthPercent() != playerCurrentHealth) {
 			final HealthTimer healthTimer = new HealthTimer(playerCurrentHealth, player.getCurrentHealthPercent()) {
@@ -285,6 +348,11 @@ public class Gen1Battle implements BattleMenu {
 
 	@Override
 	public void tickSelf(final float delta) {
+		textContent.tickSelf(delta);
+		if (textContent.isFinished() && !verifyText) {
+			ThreadUtils.notifyOnObject(textLock);
+		}
+
 		synchronized (animations) {
 			for (final Timer animation : animations) {
 				animation.tick(delta);
@@ -294,7 +362,17 @@ public class Gen1Battle implements BattleMenu {
 
 	@Override
 	public void handleMenuKey(final Key key) {
-
+		if (key == Key.accept || key == Key.deny) {
+			if (!textContent.isFinished()) {
+				textContent.finishText();
+				if (!verifyText) {
+					ThreadUtils.notifyOnObject(textLock);
+				}
+			} else if (verifyText) {
+				ThreadUtils.notifyOnObject(textLock);
+				verifyText = false;
+			}
+		}
 	}
 
 	private interface MonsterDisplayChanger {
