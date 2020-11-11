@@ -58,26 +58,20 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 		final FontHelper miniFont = MenuLoader.getFont(assets, ri, 6);
 
-		image = new ImageContent(assets
-				.get("pokemon/" + pokemon.getBaseMonster().getNumber() + ".png", Texture.class))
-						.alignBottom();
-		number = new HorzBox(0, 0).addContent(new TextContent(miniFont, "No.")).addContent(
-				new TextContent(font, "" + pokemon.getBaseMonster().getFormattedNumber())
-						.setTopMargin(-2));
+		image = new ImageContent(assets.get("pokemon/" + pokemon.getBaseMonster().getNumber() + ".png", Texture.class))
+				.alignBottom();
+		number = new HorzBox(0, 0).addContent(new TextContent(miniFont, "No."))
+				.addContent(new TextContent(font, "" + pokemon.getBaseMonster().getFormattedNumber()).setTopMargin(-2));
 		name = new TextContent(font, pokemon.getName());
 
 		infoBox = new VertBox(0, 0).setSpacing(0)
-				.addContent(
-						new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
-								.addContent(new TextContent(font, "" + pokemon.getLevel())
-										.setTopMargin(-2))
-								.setLeftMargin(80).setTopMargin(5))
+				.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+						.addContent(new TextContent(font, "" + pokemon.getLevel()).setTopMargin(-2)).setLeftMargin(80)
+						.setTopMargin(5))
 				.addContent(new TextContent(miniFont, "HP:").setLeftMargin(30).setTopMargin(4))
-				.addContent(new TextContent(font,
-						pokemon.getCurrentHealth() + "/ " + pokemon.getHealth()).setLeftMargin(65)
-								.setTopMargin(2))
-				.addContent(new TextContent(font, "Status/" + pokemon.getStatus().name)
-						.setTopMargin(9));
+				.addContent(new TextContent(font, pokemon.getCurrentHealth() + "/ " + pokemon.getHealth())
+						.setLeftMargin(65).setTopMargin(2))
+				.addContent(new TextContent(font, "Status/" + pokemon.getStatus().name).setTopMargin(9));
 
 		expBox = new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "EXP Points"))
 				.addContent(new TextContent(font, "" + pokemon.getExp()).setLeftMargin(40))
@@ -85,67 +79,54 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 				.addContent(new HorzBox(0, 0).setSpacing(2)
 						.addContent(new TextContent(font, "" + pokemon.getExpToNextLevel()))
 						.addContent(new TextContent(miniFont, "to").setTopMargin(2))
-						.addContent(new TextContent(font, "" + pokemon.getLevel() + 1)
-								.setLeftMargin(4)));
+						.addContent(new TextContent(font, "" + pokemon.getLevel() + 1).setLeftMargin(4)));
 
 		statsInd = new TextContent(font, "Stats");
 		statsInd.setVisibility(true);
-		statsBox = new BorderBox(assets,
-				0, 0)
-						.setLeftPadding(
-								8)
-						.setTopPadding(10).setBottomPadding(10)
-						.addContent(new VertBox(0, 0).setSpacing(0)
-								.addContent(new TextContent(font, "Attack")).addContent(() -> {
-									attackValue = new TextContent(font, "" + pokemon.getAttack());
-									attackValue.setLeftMargin(-110).alignRight();
-									return attackValue;
-								}).addContent(new TextContent(font, "Defense")).addContent(() -> {
-									defenseValue = new TextContent(font, "" + pokemon.getDefense());
-									defenseValue.setLeftMargin(-110).alignRight();
-									return defenseValue;
-								}).addContent(new TextContent(font, "Special Attack"))
-								.addContent(() -> {
-									specialAttackValue = new TextContent(font,
-											"" + pokemon.getSpecialAttack());
-									specialAttackValue.setLeftMargin(-110).alignRight();
-									return specialAttackValue;
-								}).addContent(new TextContent(font, "Special Defense"))
-								.addContent(() -> {
-									specialDefenseValue = new TextContent(font,
-											"" + pokemon.getSpecialDefense());
-									specialDefenseValue.setLeftMargin(-110).alignRight();
-									return specialDefenseValue;
-								}).addContent(new TextContent(font, "Speed")).addContent(() -> {
-									speedValue = new TextContent(font, "" + pokemon.getSpeed());
-									speedValue.setLeftMargin(-110).alignRight();
-									return speedValue;
-								}));
+		statsBox = new BorderBox(assets, 0, 0).setLeftPadding(8).setTopPadding(10).setBottomPadding(10).addContent(
+				new VertBox(0, 0).setSpacing(0).addContent(new TextContent(font, "Attack")).addContent(() -> {
+					attackValue = new TextContent(font, "" + pokemon.getAttack());
+					attackValue.setLeftMargin(-110).alignRight();
+					return attackValue;
+				}).addContent(new TextContent(font, "Defense")).addContent(() -> {
+					defenseValue = new TextContent(font, "" + pokemon.getDefense());
+					defenseValue.setLeftMargin(-110).alignRight();
+					return defenseValue;
+				}).addContent(new TextContent(font, "Special Attack")).addContent(() -> {
+					specialAttackValue = new TextContent(font, "" + pokemon.getSpecialAttack());
+					specialAttackValue.setLeftMargin(-110).alignRight();
+					return specialAttackValue;
+				}).addContent(new TextContent(font, "Special Defense")).addContent(() -> {
+					specialDefenseValue = new TextContent(font, "" + pokemon.getSpecialDefense());
+					specialDefenseValue.setLeftMargin(-110).alignRight();
+					return specialDefenseValue;
+				}).addContent(new TextContent(font, "Speed")).addContent(() -> {
+					speedValue = new TextContent(font, "" + pokemon.getSpeed());
+					speedValue.setLeftMargin(-110).alignRight();
+					return speedValue;
+				}));
 
 		infoBox2 = new VertBox(0, 0).setSpacing(2)
-				.addContent(
-						new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "Type1/"))
-								.addContent(new TextContent(font,
-										pokemon.getBaseMonster().getType(0).name).setLeftMargin(8)))
+				.addContent(new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "Type1/")).addContent(
+						new TextContent(font, pokemon.getBaseMonster().getType().getPrimary().name).setLeftMargin(8)))
 				.addContent(() -> {
-					final String typeName = pokemon.getBaseMonster().isDualType()
-							? pokemon.getBaseMonster().getType(1).name : "NULL";
-					final Content entry = new VertBox(0, 0).setSpacing(2)
-							.addContent(new TextContent(font, "Type2/"))
+					final String typeName = pokemon.getBaseMonster().getType().isDualType()
+							? pokemon.getBaseMonster().getType().getSecondary().name
+							: "NULL";
+					final Content entry = new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "Type2/"))
 							.addContent(new TextContent(font, typeName).setLeftMargin(8));
-					if (!pokemon.getBaseMonster().isDualType()) {
+					if (!pokemon.getBaseMonster().getType().isDualType()) {
 						entry.setVisibility(true);
 					}
 					return entry;
 				})
-				.addContent(new VertBox(0, 0).setSpacing(2)
-						.addContent(new TextContent(font, "ID No/"))
-						.addContent(new TextContent(font, pokemon.getId()).setLeftMargin(8)))
+				.addContent(new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "ID No/"))
+						.addContent(new TextContent(font, Long.toString(pokemon.getId())).setLeftMargin(8)))
 				.addContent(new VertBox(0, 0).setSpacing(2).addContent(new TextContent(font, "OT/"))
 						.addContent(new TextContent(font, pokemon.getOT()).setLeftMargin(8)));
 
-		moveBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(90)
-				.setTopPadding(10).setBottomPadding(10).addContent(() -> {
+		moveBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth).setMinHeight(90).setTopPadding(10)
+				.setBottomPadding(10).addContent(() -> {
 					final VertBox moveList = new VertBox(0, 0);
 					moveList.setSpacing(2);
 					for (int i = 0; i < 4; i++) {
@@ -154,16 +135,11 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 									.addContent(new TextContent(font, "--").setLeftMargin(120));
 						} else {
 							final Attack attack = pokemon.getAttacks().get(i);
-							moveList.addContent(new TextContent(font, attack.getName()))
-									.addContent(new HorzBox(0, 0)
-											.addContent(new TextContent(font, "PP"))
-											.addContent(new TextContent(font,
-													"" + attack.getCurrentUsage())
-															.setLeftMargin(20))
-											.addContent(new TextContent(font, "/"))
-											.addContent(new TextContent(font,
-													"" + attack.getMaxUsage()))
-											.setLeftMargin(120));
+							moveList.addContent(new TextContent(font, attack.getName())).addContent(new HorzBox(0, 0)
+									.addContent(new TextContent(font, "PP"))
+									.addContent(new TextContent(font, "" + attack.getCurrentUsage()).setLeftMargin(20))
+									.addContent(new TextContent(font, "/"))
+									.addContent(new TextContent(font, "" + attack.getMaxUsage())).setLeftMargin(120));
 						}
 					}
 					return moveList;
@@ -217,8 +193,7 @@ public class Gen1PartyStatus implements PartyStatusMenu {
 				helper.arrowCorner(rh.ri.screenWidth - 5, 2, 80, 80);
 				helper.arrowCorner(rh.ri.screenWidth - 5, 95, 140, 60);
 				if (!page) {
-					helper.percentBar(rh.ri.screenWidth - 90, 125, 80, 6,
-							pokemon.getCurrentHealthPercent());
+					helper.percentBar(rh.ri.screenWidth - 90, 125, 80, 6, pokemon.getCurrentHealthPercent());
 				}
 			});
 		});
