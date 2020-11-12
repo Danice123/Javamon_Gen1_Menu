@@ -20,6 +20,7 @@ import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.data.monster.instance.Trainer;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.battle.animation.MonsterRelease;
 import dev.dankins.javamon.display.screen.menu.content.ImageContent;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
@@ -217,8 +218,6 @@ public class Gen1Battle implements BattleMenu {
 		movePlayerFromWindow();
 		setMessageBoxContents("Go! " + player.getCurrentMonster_().getName() + "!");
 		playerMonster(player.getCurrentMonster_());
-		verifyText = true;
-		ThreadUtils.waitOnObject(textLock);
 		setMessageBoxContents("");
 	}
 
@@ -248,8 +247,16 @@ public class Gen1Battle implements BattleMenu {
 		enemyChanger.change(monster);
 		enemyCurrentHealth = monster.getCurrentHealthPercent();
 		enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
-				.setLeftMargin(0);
+				.setScale(0).setLeftMargin(0);
 		enemyMonsterInfo.setVisibility(false);
+		Timer playerMonsterRelease = new MonsterRelease(enemyImage, 1f, 0);
+		synchronized (animations) {
+			animations.add(playerMonsterRelease);
+		}
+		ThreadUtils.waitOnObject(playerMonsterRelease);
+		synchronized (animations) {
+			animations.remove(playerMonsterRelease);
+		}
 	}
 
 	public void playerMonster(final MonsterInstance monster) {
@@ -257,8 +264,16 @@ public class Gen1Battle implements BattleMenu {
 		playerCurrentHealth = monster.getCurrentHealthPercent();
 		playerImage
 				.setTexture(assets.get("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
-				.setScale(2).setLeftMargin(0).setTopMargin(4);
+				.setScale(0).setLeftMargin(0).setTopMargin(4);
 		playerMonsterInfo.setVisibility(false);
+		Timer playerMonsterRelease = new MonsterRelease(playerImage, 2f, 4);
+		synchronized (animations) {
+			animations.add(playerMonsterRelease);
+		}
+		ThreadUtils.waitOnObject(playerMonsterRelease);
+		synchronized (animations) {
+			animations.remove(playerMonsterRelease);
+		}
 	}
 
 	public void setMessageBoxContents(final String message) {
@@ -291,6 +306,7 @@ public class Gen1Battle implements BattleMenu {
 			synchronized (animations) {
 				animations.remove(healthTimer);
 			}
+			playerChanger.change(player);
 		}
 		if (enemy.getCurrentHealthPercent() != enemyCurrentHealth) {
 			final HealthTimer healthTimer = new HealthTimer(enemyCurrentHealth, enemy.getCurrentHealthPercent()) {

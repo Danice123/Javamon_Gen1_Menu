@@ -10,7 +10,7 @@ public class ImageContent extends Content {
 	private TextureRegion texture;
 	private Integer centerX = null;
 	private Integer centerY = null;
-	private int scale = 1;
+	private float scale = 1f;
 
 	protected ImageContent() {
 		texture = null;
@@ -20,7 +20,7 @@ public class ImageContent extends Content {
 		this.texture = new TextureRegion(texture);
 	}
 
-	protected TextureRegion getTexture() {
+	public TextureRegion getTexture() {
 		return texture;
 	}
 
@@ -31,12 +31,12 @@ public class ImageContent extends Content {
 
 	@Override
 	protected int getContentWidth() {
-		return getTexture().getRegionWidth() * scale;
+		return (int) (getTexture().getRegionWidth() * scale);
 	}
 
 	@Override
 	protected int getContentHeight() {
-		return getTexture().getRegionHeight() * scale;
+		return (int) (getTexture().getRegionHeight() * scale);
 	}
 
 	public ImageContent setCenterPoint(final int x, final int y) {
@@ -45,7 +45,7 @@ public class ImageContent extends Content {
 		return this;
 	}
 
-	public ImageContent setScale(final int scale) {
+	public ImageContent setScale(final float scale) {
 		this.scale = scale;
 		return this;
 	}
@@ -53,12 +53,11 @@ public class ImageContent extends Content {
 	@Override
 	public void renderContent(final RenderHelper rh, final int x, final int y) {
 		if (centerX != null && centerY != null) {
-			rh.sprite(getTexture(), x - centerX, rh.ri.screenHeight - y - centerY,
-					getContentWidth(), getContentHeight());
-		} else {
-			rh.sprite(getTexture(), x - getContentWidth() / 2,
-					rh.ri.screenHeight - y - getContentHeight() / 2, getContentWidth(),
+			rh.sprite(getTexture(), x - centerX, rh.ri.screenHeight - y - centerY, getContentWidth(),
 					getContentHeight());
+		} else {
+			rh.sprite(getTexture(), x - getContentWidth() / 2, rh.ri.screenHeight - y - getContentHeight() / 2,
+					getContentWidth(), getContentHeight());
 		}
 
 	}

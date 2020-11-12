@@ -14,7 +14,7 @@ public class AnimationContent extends ImageContent {
 	}
 
 	@Override
-	protected TextureRegion getTexture() {
+	public TextureRegion getTexture() {
 		return animation.getCurrentFrame();
 	}
 
