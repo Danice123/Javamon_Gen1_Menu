@@ -82,11 +82,15 @@ public class Gen1Battle implements BattleMenu {
 		assets.load(DEAD_POKEBALL);
 		assets.load(EMPTY_POKEBALL);
 		assets.load(player.getImage());
-		assets.load(enemy.getImage());
 		player.getParty_().forEach(
 				monster -> assets.load("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
-		enemy.getParty_().forEach(
-				monster -> assets.load("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
+		if (enemy.isTrainer()) {
+			assets.load(enemy.getImage());
+			enemy.getParty_().forEach(
+					monster -> assets.load("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class));
+		} else {
+			assets.load("pokemon/" + enemy.getCurrentMonster_().getBaseMonster().getNumber() + ".png", Texture.class);
+		}
 		assets.finishLoading();
 
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
@@ -115,14 +119,22 @@ public class Gen1Battle implements BattleMenu {
 				.addContent(new DynamicTextContent(font, () -> player.getCurrentMonster_().getCurrentHealth() + "/"
 						+ player.getCurrentMonster_().getHealth()).setLeftMargin(30).setTopMargin(1));
 
-		enemyImage = new ImageContent(assets.get(enemy.getImage()));
+		if (enemy.isTrainer()) {
+			enemyImage = new ImageContent(assets.get(enemy.getImage()));
+		} else {
+			enemyImage = new ImageContent(assets
+					.get("pokemon/" + enemy.getCurrentMonster_().getBaseMonster().getNumber() + ".png", Texture.class));
+		}
+
 		enemyImage.setVisibility(true);
 		enemyInfo = new HorzBox(0, 0).setSpacing(2);
-		for (int i = 0; i < 6; i++) {
-			if (i < Iterables.size(enemy.getParty_())) {
-				enemyInfo.addContent(new ImageContent(assets.get(POKEBALL)));
-			} else {
-				enemyInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));
+		if (enemy.isTrainer()) {
+			for (int i = 0; i < 6; i++) {
+				if (i < Iterables.size(enemy.getParty_())) {
+					enemyInfo.addContent(new ImageContent(assets.get(POKEBALL)));
+				} else {
+					enemyInfo.addContent(new ImageContent(assets.get(EMPTY_POKEBALL)));
+				}
 			}
 		}
 		enemyInfo.setVisibility(true);
@@ -216,13 +228,17 @@ public class Gen1Battle implements BattleMenu {
 
 		new BattleBegin(playerImage, enemyImage).run(animations);
 		playerInfo.setVisibility(false);
+
 		if (enemy.isTrainer()) {
 			enemyInfo.setVisibility(false);
+			setMessageBoxContentsVerify(enemy.getName() + " wants to fight!");
+			enemyInfo.setVisibility(true);
+			new EnemyMoveOut(enemyImage).run(animations);
+			setMessageBoxContents(enemy.getName() + " sent out " + enemy.getCurrentMonster_().getName() + "!");
+		} else {
+			setMessageBoxContentsVerify("Wild " + enemy.getCurrentMonster_().getName() + " appeared!");
 		}
-		setMessageBoxContentsVerify(enemy.getName() + " wants to fight!");
-		enemyInfo.setVisibility(true);
-		new EnemyMoveOut(enemyImage).run(animations);
-		setMessageBoxContents(enemy.getName() + " sent out " + enemy.getCurrentMonster_().getName() + "!");
+
 		enemyMonster(enemy.getCurrentMonster_());
 		playerInfo.setVisibility(true);
 		new PlayerMoveOut(playerImage).run(animations);
@@ -234,10 +250,12 @@ public class Gen1Battle implements BattleMenu {
 	public void enemyMonster(final MonsterInstance monster) {
 		enemyMonsterInfo.update();
 		enemyCurrentHealth = monster.getCurrentHealthPercent();
-		enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
-				.setScale(0).setLeftMargin(0);
 		enemyMonsterInfo.setVisibility(false);
-		new MonsterRelease(enemyImage, 1f, 0).run(animations);
+		if (enemy.isTrainer()) {
+			enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
+					.setScale(0).setLeftMargin(0);
+			new MonsterRelease(enemyImage, 1f, 0).run(animations);
+		}
 	}
 
 	public void playerMonster(final MonsterInstance monster) {
