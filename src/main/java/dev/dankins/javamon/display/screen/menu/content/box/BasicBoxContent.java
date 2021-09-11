@@ -93,9 +93,15 @@ public class BasicBoxContent extends Content {
 		}
 	}
 
-	protected void renderInternal(final RenderHelper rh, final int x, final int y,
-			final Content content) {
+	protected void renderInternal(final RenderHelper rh, final int x, final int y, final Content content) {
 		content.render(rh, x, y);
+	}
+
+	@Override
+	public void update() {
+		for (Content content : contents) {
+			content.update();
+		}
 	}
 
 }

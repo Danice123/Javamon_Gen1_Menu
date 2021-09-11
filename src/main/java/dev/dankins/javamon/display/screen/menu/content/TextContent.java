@@ -54,8 +54,7 @@ public class TextContent extends Content {
 		this.text = text;
 		charactersToShow = 1;
 		if (wrappingWidth != null) {
-			layout.setText(font.font, text, textColor, wrappingWidth * font.scale, Align.left,
-					true);
+			layout.setText(font.font, text, textColor, wrappingWidth * font.scale, Align.left, true);
 			cache.setText(layout, 0, 0);
 		} else {
 			layout.setText(font.font, text, textColor, 0, Align.left, false);
@@ -110,6 +109,10 @@ public class TextContent extends Content {
 
 	public synchronized void tickSelf(final float delta) {
 		charTimer.tick(delta);
+	}
+
+	@Override
+	public void update() {
 	}
 
 }

@@ -13,14 +13,19 @@ import dev.dankins.javamon.MenuLoader;
 import dev.dankins.javamon.ThreadUtils;
 import dev.dankins.javamon.Timer;
 import dev.dankins.javamon.battle.display.event.Event;
-import dev.dankins.javamon.battle.display.event.TargetedEvent;
-import dev.dankins.javamon.battle.display.event.attack.AttackEvent;
-import dev.dankins.javamon.battle.display.event.attack.TypeEffectivenessEvent;
+import dev.dankins.javamon.data.monster.attack.Attack;
 import dev.dankins.javamon.data.monster.instance.MonsterInstance;
 import dev.dankins.javamon.data.monster.instance.Trainer;
 import dev.dankins.javamon.display.RenderInfo;
 import dev.dankins.javamon.display.screen.RenderHelper;
+import dev.dankins.javamon.display.screen.menu.battle.animation.BattleBegin;
+import dev.dankins.javamon.display.screen.menu.battle.animation.EnemyMoveIn;
+import dev.dankins.javamon.display.screen.menu.battle.animation.EnemyMoveOut;
+import dev.dankins.javamon.display.screen.menu.battle.animation.HealthAnimation;
+import dev.dankins.javamon.display.screen.menu.battle.animation.MonsterFaint;
 import dev.dankins.javamon.display.screen.menu.battle.animation.MonsterRelease;
+import dev.dankins.javamon.display.screen.menu.battle.animation.PlayerMoveOut;
+import dev.dankins.javamon.display.screen.menu.content.DynamicTextContent;
 import dev.dankins.javamon.display.screen.menu.content.ImageContent;
 import dev.dankins.javamon.display.screen.menu.content.TextContent;
 import dev.dankins.javamon.display.screen.menu.content.box.BorderBox;
@@ -42,14 +47,12 @@ public class Gen1Battle implements BattleMenu {
 	private Trainer player;
 	private HorzBox playerInfo;
 	private VertBox playerMonsterInfo;
-	private MonsterDisplayChanger playerChanger;
 	private ImageContent playerImage;
 	private float playerCurrentHealth;
 
 	private Trainer enemy;
 	private HorzBox enemyInfo;
 	private VertBox enemyMonsterInfo;
-	private MonsterDisplayChanger enemyChanger;
 	private ImageContent enemyImage;
 	private float enemyCurrentHealth;
 
@@ -102,15 +105,15 @@ public class Gen1Battle implements BattleMenu {
 		playerInfo.setVisibility(true);
 		playerMonsterInfo = new VertBox(0, 0).setSpacing(2);
 		playerMonsterInfo.setVisibility(true);
-		playerChanger = (monster) -> {
-			playerMonsterInfo.clearContent().addContent(new TextContent(font, monster.getName()))
-					.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
-							.addContent(new TextContent(font, "" + monster.getLevel()).setTopMargin(-2))
-							.setLeftMargin(50))
-					.addContent(new TextContent(miniFont, "HP:").setTopMargin(1))
-					.addContent(new TextContent(font, monster.getCurrentHealth() + "/" + monster.getHealth())
-							.setLeftMargin(30).setTopMargin(1));
-		};
+		playerMonsterInfo.addContent(new DynamicTextContent(font, () -> player.getCurrentMonster_().getName()))
+				.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+						.addContent(new DynamicTextContent(font, () -> "" + player.getCurrentMonster_().getLevel())
+								.setTopMargin(-2))
+						.setLeftMargin(50))
+				.addContent(
+						new TextContent(miniFont, "HP:").setTopMargin(1))
+				.addContent(new DynamicTextContent(font, () -> player.getCurrentMonster_().getCurrentHealth() + "/"
+						+ player.getCurrentMonster_().getHealth()).setLeftMargin(30).setTopMargin(1));
 
 		enemyImage = new ImageContent(assets.get(enemy.getImage()));
 		enemyImage.setVisibility(true);
@@ -125,13 +128,12 @@ public class Gen1Battle implements BattleMenu {
 		enemyInfo.setVisibility(true);
 		enemyMonsterInfo = new VertBox(0, 0).setSpacing(2);
 		enemyMonsterInfo.setVisibility(true);
-		enemyChanger = (monster) -> {
-			enemyMonsterInfo.clearContent().addContent(new TextContent(font, monster.getName()))
-					.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
-							.addContent(new TextContent(font, "" + monster.getLevel()).setTopMargin(-2))
-							.setLeftMargin(35))
-					.addContent(new TextContent(miniFont, "HP:").setLeftMargin(10).setTopMargin(2));
-		};
+		enemyMonsterInfo.addContent(new DynamicTextContent(font, () -> enemy.getCurrentMonster_().getName()))
+				.addContent(new HorzBox(0, 0).setSpacing(2).addContent(new TextContent(miniFont, ":L"))
+						.addContent(new DynamicTextContent(font, () -> "" + enemy.getCurrentMonster_().getLevel())
+								.setTopMargin(-2))
+						.setLeftMargin(35))
+				.addContent(new TextContent(miniFont, "HP:").setLeftMargin(10).setTopMargin(2));
 
 		textBox = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth);
 		textBox.setMinHeight(50).addContent(() -> {
@@ -144,17 +146,17 @@ public class Gen1Battle implements BattleMenu {
 
 	@Override
 	public void sendEvent(Event event) {
-		switch (event.getType()) {
+		switch (event.type) {
 		case StartBattle:
 			startBattle();
 			break;
 		case Attack: {
-			final AttackEvent e = (AttackEvent) event;
-			if (player.getKey() == e.key) {
-				setMessageBoxContentsVerify(player.getCurrentMonster_().getName() + " used " + e.attack.getName());
+			Attack attack = (Attack) event.parameters.get("Attack");
+			if (player.getKey() == event.parameters.get("Key")) {
+				setMessageBoxContentsVerify(player.getCurrentMonster_().getName() + " used " + attack.getName());
 			} else {
 				setMessageBoxContentsVerify(
-						"Enemy " + enemy.getCurrentMonster_().getName() + " used " + e.attack.getName());
+						"Enemy " + enemy.getCurrentMonster_().getName() + " used " + attack.getName());
 			}
 			break;
 		}
@@ -162,9 +164,8 @@ public class Gen1Battle implements BattleMenu {
 			updateHealth(player.getCurrentMonster_(), enemy.getCurrentMonster_());
 			break;
 		case TypeEffectiveness: {
-			final TypeEffectivenessEvent e = (TypeEffectivenessEvent) event;
-			if (e.effectM() != null) {
-				setMessageBoxContentsVerify(e.effectM());
+			if (event.parameters.get("Text") != null) {
+				setMessageBoxContentsVerify((String) event.parameters.get("Text"));
 			}
 			break;
 		}
@@ -172,108 +173,81 @@ public class Gen1Battle implements BattleMenu {
 			setMessageBoxContentsVerify("It was a critical hit!");
 			break;
 		case FaintMonster: {
-			final TargetedEvent e = (TargetedEvent) event;
-			if (player.getKey() == e.getTarget()) {
+			if (player.getKey() == event.parameters.get("Target")) {
+				new MonsterFaint(playerImage).run(animations);
 				setMessageBoxContentsVerify(player.getCurrentMonster_().getName() + " fainted!");
 			} else {
+				new MonsterFaint(enemyImage).run(animations);
+				enemyMonsterInfo.setVisibility(true);
 				setMessageBoxContentsVerify("Enemy " + enemy.getCurrentMonster_().getName() + " fainted!");
 			}
 			break;
 		}
+		case ExpGain:
+			setMessageBoxContentsVerify(((MonsterInstance) event.parameters.get("Monster")).getName() + " gained "
+					+ event.parameters.get("EXP") + " EXP. Points!");
+			break;
+		case LevelUp:
+			playerMonsterInfo.update();
+			setMessageBoxContentsVerify(((MonsterInstance) event.parameters.get("Monster")).getName()
+					+ " grew to level " + event.parameters.get("Level") + "!");
+			// TODO: Missing stat popup block
+			break;
 		case TrainerLoss:
 			setMessageBoxContentsVerify(player.getName() + " defeated " + enemy.getName() + "!");
+			enemyImage.setTexture(assets.get(enemy.getImage())).setLeftMargin(100).setVisibility(false);
+			new EnemyMoveIn(enemyImage).run(animations);
 			setMessageBoxContentsVerify(enemy.getTrainerLossQuip());
+			break;
+		case WonMoney:
+			setMessageBoxContentsVerify(
+					player.getName() + " got $" + event.parameters.get("Winnings") + " for winning!");
 			break;
 		case EndBattle:
 			ThreadUtils.notifyOnObject(this);
 			break;
 		default:
-			System.out.println("Unhandled event " + event.getType());
+			System.out.println("Unhandled event " + event.type);
 		}
 	}
 
 	public void startBattle() {
 		ThreadUtils.waitOnObject(initLock);
-		playerImage.setLeftMargin(PLAYER_OFF_BEGINNING);
-		playerImage.setVisibility(false);
-		enemyImage.setLeftMargin(ENEMY_OFF_BEGINNING);
-		enemyImage.setVisibility(false);
 
-		synchronized (animations) {
-			animations.add(beginning);
-		}
-		ThreadUtils.waitOnObject(beginning);
-		synchronized (animations) {
-			animations.remove(beginning);
-		}
+		new BattleBegin(playerImage, enemyImage).run(animations);
 		playerInfo.setVisibility(false);
 		if (enemy.isTrainer()) {
 			enemyInfo.setVisibility(false);
 		}
-
 		setMessageBoxContentsVerify(enemy.getName() + " wants to fight!");
-		moveEnemyFromWindow();
+		enemyInfo.setVisibility(true);
+		new EnemyMoveOut(enemyImage).run(animations);
 		setMessageBoxContents(enemy.getName() + " sent out " + enemy.getCurrentMonster_().getName() + "!");
 		enemyMonster(enemy.getCurrentMonster_());
-		movePlayerFromWindow();
+		playerInfo.setVisibility(true);
+		new PlayerMoveOut(playerImage).run(animations);
 		setMessageBoxContents("Go! " + player.getCurrentMonster_().getName() + "!");
 		playerMonster(player.getCurrentMonster_());
 		setMessageBoxContents("");
 	}
 
-	public void moveEnemyFromWindow() {
-		enemyInfo.setVisibility(true);
-		synchronized (animations) {
-			animations.add(enemyMoveOut);
-		}
-		ThreadUtils.waitOnObject(enemyMoveOut);
-		synchronized (animations) {
-			animations.remove(enemyMoveOut);
-		}
-	}
-
-	public void movePlayerFromWindow() {
-		playerInfo.setVisibility(true);
-		synchronized (animations) {
-			animations.add(playerMoveOut);
-		}
-		ThreadUtils.waitOnObject(playerMoveOut);
-		synchronized (animations) {
-			animations.remove(playerMoveOut);
-		}
-	}
-
 	public void enemyMonster(final MonsterInstance monster) {
-		enemyChanger.change(monster);
+		enemyMonsterInfo.update();
 		enemyCurrentHealth = monster.getCurrentHealthPercent();
 		enemyImage.setTexture(assets.get("pokemon/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
 				.setScale(0).setLeftMargin(0);
 		enemyMonsterInfo.setVisibility(false);
-		Timer playerMonsterRelease = new MonsterRelease(enemyImage, 1f, 0);
-		synchronized (animations) {
-			animations.add(playerMonsterRelease);
-		}
-		ThreadUtils.waitOnObject(playerMonsterRelease);
-		synchronized (animations) {
-			animations.remove(playerMonsterRelease);
-		}
+		new MonsterRelease(enemyImage, 1f, 0).run(animations);
 	}
 
 	public void playerMonster(final MonsterInstance monster) {
-		playerChanger.change(monster);
+		playerMonsterInfo.update();
 		playerCurrentHealth = monster.getCurrentHealthPercent();
 		playerImage
 				.setTexture(assets.get("pokemon/back/" + monster.getBaseMonster().getNumber() + ".png", Texture.class))
 				.setScale(0).setLeftMargin(0).setTopMargin(4);
 		playerMonsterInfo.setVisibility(false);
-		Timer playerMonsterRelease = new MonsterRelease(playerImage, 2f, 4);
-		synchronized (animations) {
-			animations.add(playerMonsterRelease);
-		}
-		ThreadUtils.waitOnObject(playerMonsterRelease);
-		synchronized (animations) {
-			animations.remove(playerMonsterRelease);
-		}
+		new MonsterRelease(playerImage, 2f, 4).run(animations);
 	}
 
 	public void setMessageBoxContents(final String message) {
@@ -293,35 +267,13 @@ public class Gen1Battle implements BattleMenu {
 
 	public void updateHealth(final MonsterInstance player, final MonsterInstance enemy) {
 		if (player.getCurrentHealthPercent() != playerCurrentHealth) {
-			final HealthTimer healthTimer = new HealthTimer(playerCurrentHealth, player.getCurrentHealthPercent()) {
-				@Override
-				protected void modifyValue(final float current) {
-					playerCurrentHealth = current;
-				}
-			};
-			synchronized (animations) {
-				animations.add(healthTimer);
-			}
-			ThreadUtils.waitOnObject(healthTimer);
-			synchronized (animations) {
-				animations.remove(healthTimer);
-			}
-			playerChanger.change(player);
+			new HealthAnimation(playerCurrentHealth, player.getCurrentHealthPercent(),
+					(float current) -> playerCurrentHealth = current).run(animations);
 		}
+		playerMonsterInfo.update();
 		if (enemy.getCurrentHealthPercent() != enemyCurrentHealth) {
-			final HealthTimer healthTimer = new HealthTimer(enemyCurrentHealth, enemy.getCurrentHealthPercent()) {
-				@Override
-				protected void modifyValue(final float current) {
-					enemyCurrentHealth = current;
-				}
-			};
-			synchronized (animations) {
-				animations.add(healthTimer);
-			}
-			ThreadUtils.waitOnObject(healthTimer);
-			synchronized (animations) {
-				animations.remove(healthTimer);
-			}
+			new HealthAnimation(enemyCurrentHealth, enemy.getCurrentHealthPercent(),
+					(float current) -> enemyCurrentHealth = current).run(animations);
 		}
 	}
 
@@ -389,88 +341,6 @@ public class Gen1Battle implements BattleMenu {
 				verifyText = false;
 			}
 		}
-	}
-
-	private interface MonsterDisplayChanger {
-		void change(MonsterInstance monster);
-	}
-
-	static private final int PLAYER_OFF_BEGINNING = 250;
-	static private final int ENEMY_OFF_BEGINNING = -PLAYER_OFF_BEGINNING;
-
-	private final Timer beginning = new Timer(0) {
-
-		static private final float TIME = 1.0f;
-
-		@Override
-		public void ring(final float delta, final float timeSinceRung) {
-			int current = (int) (timeSinceRung * PLAYER_OFF_BEGINNING / TIME);
-			if (timeSinceRung >= TIME) {
-				current = PLAYER_OFF_BEGINNING;
-				done();
-			}
-			playerImage.setLeftMargin(PLAYER_OFF_BEGINNING - current);
-			enemyImage.setLeftMargin(ENEMY_OFF_BEGINNING + current);
-		}
-	};
-
-	private final Timer enemyMoveOut = new Timer(0) {
-
-		static private final int ENEMY_OFF = 100;
-		static private final float TIME = 0.5f;
-
-		@Override
-		public void ring(final float delta, final float timeSinceRung) {
-			int current = (int) (timeSinceRung * ENEMY_OFF / TIME);
-			if (timeSinceRung >= TIME) {
-				current = ENEMY_OFF;
-				done();
-			}
-			enemyImage.setLeftMargin(current);
-		}
-	};
-
-	private final Timer playerMoveOut = new Timer(0) {
-
-		static private final int PLAYER_OFF = 100;
-		static private final float TIME = 0.5f;
-
-		@Override
-		public void ring(final float delta, final float timeSinceRung) {
-			int current = (int) (timeSinceRung * PLAYER_OFF / TIME);
-			if (timeSinceRung >= TIME) {
-				current = PLAYER_OFF;
-				done();
-			}
-			playerImage.setLeftMargin(-current);
-		}
-	};
-
-	private abstract class HealthTimer extends Timer {
-
-		static private final float TIME = 0.5f;
-
-		private final float start;
-		private final float target;
-
-		public HealthTimer(final float start, final float target) {
-			super(0);
-			this.start = start;
-			this.target = target;
-		}
-
-		@Override
-		public void ring(final float delta, final float timeSinceRung) {
-			float current = start + timeSinceRung * (target - start) / TIME;
-			if (timeSinceRung >= TIME) {
-				current = target;
-				done();
-			}
-			modifyValue(current);
-		}
-
-		protected abstract void modifyValue(float current);
-
 	}
 
 }

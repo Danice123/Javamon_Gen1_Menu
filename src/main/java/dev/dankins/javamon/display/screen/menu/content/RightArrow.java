@@ -47,9 +47,12 @@ public class RightArrow extends Content {
 			rh.sprite(rightArrowAlt, x, rh.ri.screenHeight - y, rightArrowAlt.getRegionWidth(),
 					rightArrowAlt.getRegionHeight());
 		} else {
-			rh.sprite(rightArrow, x, rh.ri.screenHeight - y, rightArrow.getRegionWidth(),
-					rightArrow.getRegionHeight());
+			rh.sprite(rightArrow, x, rh.ri.screenHeight - y, rightArrow.getRegionWidth(), rightArrow.getRegionHeight());
 		}
+	}
+
+	@Override
+	public void update() {
 	}
 
 }

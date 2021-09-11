@@ -11,6 +11,7 @@ public class ImageContent extends Content {
 	private Integer centerX = null;
 	private Integer centerY = null;
 	private float scale = 1f;
+	private Integer height = null;
 
 	protected ImageContent() {
 		texture = null;
@@ -36,6 +37,9 @@ public class ImageContent extends Content {
 
 	@Override
 	protected int getContentHeight() {
+		if (height != null) {
+			return (int) (height * scale);
+		}
 		return (int) (getTexture().getRegionHeight() * scale);
 	}
 
@@ -50,6 +54,16 @@ public class ImageContent extends Content {
 		return this;
 	}
 
+	public ImageContent setHeight(final int height) {
+		this.height = height;
+		return this;
+	}
+
+	public ImageContent resetHeight() {
+		this.height = null;
+		return this;
+	}
+
 	@Override
 	public void renderContent(final RenderHelper rh, final int x, final int y) {
 		if (centerX != null && centerY != null) {
@@ -60,6 +74,10 @@ public class ImageContent extends Content {
 					getContentWidth(), getContentHeight());
 		}
 
+	}
+
+	@Override
+	public void update() {
 	}
 
 }

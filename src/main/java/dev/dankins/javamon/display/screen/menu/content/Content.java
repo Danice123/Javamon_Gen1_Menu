@@ -25,6 +25,10 @@ public abstract class Content {
 
 	protected abstract int getContentHeight();
 
+	public int getTopMargin() {
+		return topMargin;
+	}
+
 	public Content setTopMargin(final int topMargin) {
 		this.topMargin = topMargin;
 		return this;
@@ -78,4 +82,6 @@ public abstract class Content {
 		hidden = !hidden;
 		return this;
 	}
+
+	public abstract void update();
 }
