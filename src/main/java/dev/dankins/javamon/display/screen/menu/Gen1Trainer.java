@@ -38,56 +38,18 @@ public class Gen1Trainer implements TrainerMenu {
 		assets.finishLoading();
 		final FontHelper font = MenuLoader.getFont(assets, ri, 8);
 
-		playerWindow = new BorderBox(assets,
-				0, 0)
-						.setMinWidth(
-								ri.screenWidth)
+		playerWindow = new BorderBox(assets, 0, 0).setMinWidth(ri.screenWidth)
+				.addContent(new HorzBox(0, 0)
+						.addContent(new VertBox(0, 0).addContent(new TextContent(font, "NAME/ " + player.getName()))
+								.addContent(new TextContent(font, "MONEY/ $" + player.getMoney()))
+								.addContent(new TextContent(font, "TIME/ 10:48")))
 						.addContent(
-								new HorzBox(
-										45, 0)
-												.addContent(
-														new VertBox(0, 0)
-																.addContent(new TextContent(font,
-																		"NAME/ " + player
-																				.getName()))
-																.addContent(new TextContent(font,
-																		"MONEY/ $"
-																				+ player.getMoney()))
-																.addContent(new TextContent(font,
-																		"TIME/ 10:48"))
-																.setTopMargin(10))
-												.addContent(new ImageContent(
-														assets.get(player.getImage()))));
+								new ImageContent(assets.get(player.getImage())).setLeftMargin(20).setTopMargin(20)));
 	}
 
 	@Override
 	public void renderScreen(final RenderHelper rh, final float delta) {
 		rh.withSpriteBatch((batch) -> playerWindow.render(rh, 0, 0));
-
-		// batch.begin();
-		//
-		// final int playerBoxTop = ri.screenHeight - 20 * ri.getScale();
-		// final int playerBoxSide = 20 * ri.getScale();
-		//
-		// ri.border.drawBox(batch, 0, ri.screenHeight - 80 * ri.getScale(),
-		// ri.screenWidth,
-		// 80 * ri.getScale());
-		//
-		// ri.font.draw(batch, "NAME/ " + player.getName(), playerBoxSide,
-		// playerBoxTop);
-		// ri.font.draw(batch, "MONEY/ $" + player.getMoney(), playerBoxSide,
-		// playerBoxTop - 18 * 1 * ri.getScale());
-		// ri.font.draw(batch, "TIME/ 10:48", playerBoxSide, playerBoxTop - 18 *
-		// 2 * ri.getScale());
-		//
-		// batch.draw(playerImage, playerBoxSide + 140 * ri.getScale(),
-		// playerBoxTop - 50 * ri.getScale(), playerImage.getWidth() *
-		// ri.getScale(),
-		// playerImage.getHeight() * ri.getScale(), 0, 0,
-		// playerImage.getWidth(),
-		// playerImage.getHeight(), false, false);
-		//
-		// batch.end();
 	}
 
 	@Override
